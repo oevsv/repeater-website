@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="en" datatype="html">
+        <source>EN</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="english" datatype="html">
+        <source>English</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="deutsch" datatype="html">
+        <source>Deutsch</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="oevsvdv-href" datatype="html">
+        <source>https://www.oevsv.at/</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="oevsvdv" datatype="html">
+        <source>ÖVSV Dachverband</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="frequencies" datatype="html">
+        <source>UKW-Referat</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">121</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="cardMobile" datatype="html">
+        <source>Austrian Amateur radio repeaters</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="operator" datatype="html">
+        <source>Repeatertyp: </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="allTypes" datatype="html">
+        <source>Alle Repeater</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="imprint" datatype="html">
+        <source>Legal notice </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="meter3" datatype="html">
+        <source> m </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="introtext" datatype="html">
+        <source>Welcome to the repeater page of the ÖVSV VHF management</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="introtext_details1" datatype="html">
+        <source> Click on a repeater for further details.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="introtext_details2" datatype="html">
+        <source> Further information including downloadable repeater information can be found </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="introtext_details3" datatype="html">
+        <source> here</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="introtext_details4" datatype="html">
+        <source> .</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="introtext_details5" datatype="html">
+        <source>Please send your feedback/updates to</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="trx_information" datatype="html">
+        <source>Site <x id="INTERPOLATION" equiv-text="{{ selectedSite.site_name }}"/> <x id="INTERPOLATION_1" equiv-text="{{selectedSite.locator_short}}"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="parmeter" datatype="html">
+        <source>Parameter</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">169</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="value" datatype="html">
+        <source>Value</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="supports" datatype="html">
+        <source>Site supports</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="fm" datatype="html">
+        <source>FM</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">181</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dmr" datatype="html">
+        <source>DMR</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="c4fm" datatype="html">
+        <source>C4fm</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">90</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">187</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dstar" datatype="html">
+        <source>Dstar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tetra" datatype="html">
+        <source>Tetra</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">96</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="beacon" datatype="html">
+        <source>Beacon</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">99</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">196</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="atv" datatype="html">
+        <source>ATV</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">102</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">199</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="digipeater" datatype="html">
+        <source>Digipeater</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">105</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">202</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="city" datatype="html">
+        <source>Next city</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="latitude" datatype="html">
+        <source>Latitude</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="longitude" datatype="html">
+        <source>Longitude</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="locator" datatype="html">
+        <source>Locator</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">135</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="sea_level" datatype="html">
+        <source>Sea level</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">144</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="meter1" datatype="html">
+        <source> m </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">147,148</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="radios" datatype="html">
+        <source>Details</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="trxsupports" datatype="html">
+        <source>Radio mode</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">177</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="frequency_tx" datatype="html">
+        <source>Frequency TX (downlink)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">211</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="mbits" datatype="html">
+        <source> MHz </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">214,215</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">231,232</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="frequency_rx" datatype="html">
+        <source>Frequency RX (uplink)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">228</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="ctcss_rx" datatype="html">
+        <source>CTCSS RX (uplink)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">237</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="hz" datatype="html">
+        <source>Hz </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">240,241</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">256,257</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="fm_wakeup" datatype="html">
+        <source>FM wakeup</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">246</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="ctcss_tx" datatype="html">
+        <source>CTCSS TX (downlink)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">253</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="sysop" datatype="html">
+        <source>Sysop</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">262</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="hardware" datatype="html">
+        <source>Hardware</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">269</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="mmdvm" datatype="html">
+        <source>MMDVM</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">273</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="power" datatype="html">
+        <source>Power</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">279</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="battery_power" datatype="html">
+        <source>Battery </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">283</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="solar_power" datatype="html">
+        <source>Solar</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">286</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="antenna_heigth" datatype="html">
+        <source>Antenna heigth)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">292</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="meter2" datatype="html">
+        <source>m </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">295,296</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="url" datatype="html">
+        <source>Web page</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">301</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="echolink" datatype="html">
+        <source>Echolink</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">310</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="digital_id" datatype="html">
+        <source>Digital ID</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">317</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dmr_network" datatype="html">
+        <source>DMR network</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">324</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="ipsc2" datatype="html">
+        <source>IPSC2 </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">328</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="brandmeister" datatype="html">
+        <source>BM</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">331</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="cc" datatype="html">
+        <source>Color code</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">336</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="c4fm_groups" datatype="html">
+        <source>C4fm groups</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">343</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dstar_rpt1" datatype="html">
+        <source>Dstar RPT1</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">350</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dstar_rpt2" datatype="html">
+        <source>Dstar RPT2</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">357</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="comment" datatype="html">
+        <source>Comment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">364</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nearby" datatype="html">
+        <source> Nearby sites </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">380,381</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nearbyintro" datatype="html">
+        <source>Oops, there is no repeater where you clicked. But here is a list of nearby sites: </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">382,383</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
