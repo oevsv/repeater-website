@@ -42,7 +42,6 @@ const iconImage: Style = new Style({
     anchor: [0.5, 0.5],
     // anchorXUnits: 'pixels',
     // anchorYUnits: 'pixels',
-    //src: 'assets/tower.png',
     src: 'assets/dot_red.png',
     scale: 0.7
   })
@@ -53,7 +52,6 @@ const iconImageSelected: Style = new Style({
     anchor: [0.5, 0.5],
     // anchorXUnits: 'pixels',
     // anchorYUnits: 'pixels',
-    //src: 'assets/tower.png',
     src: 'assets/dot_green.png',
     scale: 0.7
   })
