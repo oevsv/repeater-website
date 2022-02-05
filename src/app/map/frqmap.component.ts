@@ -215,11 +215,14 @@ export class FrqmapComponent implements OnInit {
         this.formOptions = response;
 
         //there should be a default - select it
+
+        // {"type": null, "label": "@all", "default": true}
+
         let defaultType = this.formOptions.filter.types.find(o => {
           return o.default
         })
         if (defaultType?.type === null) {
-          defaultType.type = "default"
+          defaultType.type = 'null';
         }
         if (defaultType) {
           this.selectedType = defaultType.type;
