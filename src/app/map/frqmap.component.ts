@@ -189,7 +189,6 @@ export class FrqmapComponent implements OnInit {
           // replace spaces and slash
           let siteUrl = 'https://repeater.oevsv.at/tiles/' + siteName.replaceAll(' ', '-').replaceAll('/', '_');
           console.log("Url for tiles of site", siteUrl);
-          //todo: substitute
           console.log("Current site", siteName)
           // remove pointInfo
           this.pointInfo = null;
@@ -201,6 +200,7 @@ export class FrqmapComponent implements OnInit {
         this.selectedSite = null;
         console.log("not hit - not site here");
         this.loadInformationForPoint(coordsWgs84);
+        this.removeOverlaySource();
       }
     })
 
@@ -272,7 +272,7 @@ export class FrqmapComponent implements OnInit {
      }
    console.log("loadsites; label set to ", this.selectedTypeLabel);
 
-   let url='';
+   let url=)'';
 
     if (param!='null') {
       param = param.toLocaleLowerCase()
@@ -484,7 +484,14 @@ export class FrqmapComponent implements OnInit {
       })
   }
 
-  //obsolete
+  private removeOverlaySource() :void {
+    if (this.currentOverlay != null) {
+      this.map.removeLayer(this.currentOverlay)
+    }
+  }
+
+
+
   private changeOverlaySource(url: String) :void {
     if (this.currentOverlay != null) {
       this.map.removeLayer(this.currentOverlay)
