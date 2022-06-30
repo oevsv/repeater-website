@@ -176,6 +176,7 @@ export class FrqmapComponent implements OnInit {
         //reset old, of any
         this.selectedFeature.setStyle(iconImage);
       }
+      let siteUrl;
       if (feature) {
         console.log("feature for icon")
         //set feature style
@@ -185,12 +186,13 @@ export class FrqmapComponent implements OnInit {
         this.selectedSite = feature.getProperties().site
         if (this.selectedSite) {
           let siteName = this.selectedSite.site_name;
-          let siteUrl = 'https://repeater.oevsv.at/tiles/'+siteName.replace(' ','-').replace('/','_').replace(' ','-').replace(' ','-').replace(' ','-');
+          // replace spaces and slash
+          let siteUrl = 'https://repeater.oevsv.at/tiles/' + siteName.replaceAll(' ', '-').replaceAll('/', '_');
           console.log("Url for tiles of site", siteUrl);
           //todo: substitute
           console.log("Current site", siteName)
           // remove pointInfo
-          this.pointInfo=null;
+          this.pointInfo = null;
           this.loadInformationForSite(siteName)
           this.changeOverlaySource(siteUrl)
 
