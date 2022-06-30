@@ -177,6 +177,7 @@ export class FrqmapComponent implements OnInit {
         this.selectedFeature.setStyle(iconImage);
       }
       if (feature) {
+        console.log("feature for icon")
         //set feature style
         this.selectedFeature = feature as Feature<any>;
         this.selectedFeature.setStyle(iconImageSelected);
@@ -184,11 +185,16 @@ export class FrqmapComponent implements OnInit {
         this.selectedSite = feature.getProperties().site
         if (this.selectedSite) {
           let siteName = this.selectedSite.site_name;
+          let siteUrl = 'https://repeater.oevsv.at/tiles/'+siteName.replace(' ','-').replace('/','_').replace(' ','-').replace(' ','-').replace(' ','-');
+          console.log("Url for tiles of site", siteUrl);
+          //todo: substitute
+          console.log("Current site", siteName)
           // remove pointInfo
           this.pointInfo=null;
           this.loadInformationForSite(siteName)
+          this.changeOverlaySource(siteUrl)
+
         }
-        console.log("feature for icon")
       } else {
         this.selectedSite = null;
         console.log("not hit - not site here");
@@ -497,20 +503,7 @@ export class FrqmapComponent implements OnInit {
     this.map.addLayer(this.currentOverlay);
   }
 
-  // obsolete, to be removed
-  getOperatorByLabel(name : String): RepeaterType | undefined {
-    let result = this.formOptions.filter.types.find((o) => {
-      return o.type === name
 
-      let result = this.formOptions.filter.types.find((o) => {
-        return o.type === o.label
-      });
-      console.log("and now the result of find")
-      console.log(result);
-
-    });
-    return result
-  }
 
   convertDMS(dd: number): string {
     //https://stackoverflow.com/questions/5786025/decimal-degrees-to-degrees-minutes-and-seconds-in-javascript
