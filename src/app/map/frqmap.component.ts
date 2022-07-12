@@ -28,6 +28,7 @@ import VectorLayer from "ol/layer/Vector";
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
 import {Fill, Icon, Stroke, Style} from "ol/style";
 import TileSource from "ol/source/Tile";
+import {Control, defaults as defaultControls} from "ol/control";
 import {Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
 
@@ -116,6 +117,7 @@ export class FrqmapComponent implements OnInit {
 
   private initMap(): void {
     this.map = new Map({
+      controls: defaultControls().extend([new CenterOnUserLocationControl()]),
       view: new View({
         center: [0, 0],
         zoom: 10
@@ -272,7 +274,7 @@ export class FrqmapComponent implements OnInit {
      }
    console.log("loadsites; label set to ", this.selectedTypeLabel);
 
-   let url=)'';
+   let url='';
 
     if (param!='null') {
       param = param.toLocaleLowerCase()
@@ -527,6 +529,51 @@ export class FrqmapComponent implements OnInit {
 
 }
 
+class CenterOnUserLocationControl extends Control {
+  /**
+   * @param {Object} [opt_options] Control options.
+   */
+  constructor(opt_options? : any) {
+    const options = opt_options || {};
+
+    var button = document.createElement('button');
+    button.innerHTML = '&#8226;';
+
+    const element = document.createElement('div');
+    element.className = 'center-user-location ol-unselectable ol-control';
+
+    element.appendChild(button);
+
+    super({
+      element: element,
+      target: options.target,
+    });
+
+    button.addEventListener('click', this.centerMapOnUserLocation.bind(this), false);
+    button.addEventListener('touchstart', this.centerMapOnUserLocation.bind(this), false);
+  }
+
+  centerMapOnUserLocation() {
+    new Promise((resolve, reject) => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            let coords = [position.coords.longitude, position.coords.latitude]
+            resolve(coords)
+          }, (error) => {
+            reject(error)
+          })
+        } else {
+          reject("Geolocation is not supported by this browser.")
+        }
+      }
+    ).then((coords: any) => {
+      console.log("Centering map to user location ", coords)
+      let convertedCoords = olProj.transform(coords, 'EPSG:4326', 'EPSG:3857')
+      this.getMap().getView().setCenter(convertedCoords)
+      this.getMap().getView().setZoom(14);
+    });
+  }
+}
 
 
 
