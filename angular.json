@@ -125,5 +125,8 @@
       }
     }
   },
-  "defaultProject": "frq-map"
+  "defaultProject": "frq-map",
+  "cli": {
+    "analytics": false
+  }
 }
