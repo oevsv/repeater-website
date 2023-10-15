@@ -3,7 +3,7 @@
  <ows:ServiceIdentification>
     <ows:Title>basemap.at</ows:Title>
     <ows:Abstract>basemap.at ist eine Rasterkarte in Form eines vorgenerierten Kachel-Caches,
-     in der Web Mercator Auxiliary Sphere und damit kompatibel zu den g&#x00E4;ngigen weltweiten
+     in der Web Mercator Auxiliary Sphere und damit kompatibel zu den g&#x00E4;ngigen weltweiten 
      Basiskarten wie beispielsweise jenen von OpenStreetMap, Google Maps und Bing Maps.
     </ows:Abstract>
     <ows:ServiceType>OGC WMTS</ows:ServiceType>
@@ -125,6 +125,10 @@
         <TileMatrixSet>google3857</TileMatrixSet>
       </TileMatrixSetLink>
       <ResourceURL format="image/png" template="https://maps1.wien.gv.at/basemap/geolandbasemap/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps2.wien.gv.at/basemap/geolandbasemap/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps3.wien.gv.at/basemap/geolandbasemap/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps4.wien.gv.at/basemap/geolandbasemap/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps.wien.gv.at/basemap/geolandbasemap/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
     </Layer>
     <Layer>
       <ows:Title>Geoland Basemap Overlay</ows:Title>
@@ -141,7 +145,11 @@
       <TileMatrixSetLink>
         <TileMatrixSet>google3857</TileMatrixSet>
       </TileMatrixSetLink>
-      <ResourceURL format="image/png" template="https://repeater.oevsv.at/basemap/bmapoverlay/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps1.wien.gv.at/basemap/bmapoverlay/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps2.wien.gv.at/basemap/bmapoverlay/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps3.wien.gv.at/basemap/bmapoverlay/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps4.wien.gv.at/basemap/bmapoverlay/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps.wien.gv.at/basemap/bmapoverlay/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
     </Layer>
     <Layer>
       <ows:Title>Geoland Basemap Grau</ows:Title>
@@ -158,7 +166,11 @@
       <TileMatrixSetLink>
         <TileMatrixSet>google3857</TileMatrixSet>
       </TileMatrixSetLink>
-      <ResourceURL format="image/png" template="https://repeater.oevsv.at/basemap/bmapgrau/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps1.wien.gv.at/basemap/bmapgrau/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps2.wien.gv.at/basemap/bmapgrau/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps3.wien.gv.at/basemap/bmapgrau/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps4.wien.gv.at/basemap/bmapgrau/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+      <ResourceURL format="image/png" template="https://maps.wien.gv.at/basemap/bmapgrau/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
     </Layer>
     <Layer>
       <ows:Title>Basemap High DPI</ows:Title>
@@ -175,7 +187,11 @@
       <TileMatrixSetLink>
         <TileMatrixSet>google3857</TileMatrixSet>
       </TileMatrixSetLink>
-      <ResourceURL format="image/jpeg" template="https://repeater.oevsv.at/basemap/bmaphidpi/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps1.wien.gv.at/basemap/bmaphidpi/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps2.wien.gv.at/basemap/bmaphidpi/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps3.wien.gv.at/basemap/bmaphidpi/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps4.wien.gv.at/basemap/bmaphidpi/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps.wien.gv.at/basemap/bmaphidpi/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
     </Layer>
     <Layer>
       <ows:Title>Geoland Basemap Orthofoto</ows:Title>
@@ -192,7 +208,11 @@
       <TileMatrixSetLink>
         <TileMatrixSet>google3857</TileMatrixSet>
       </TileMatrixSetLink>
-      <ResourceURL format="image/jpeg" template="https://repeater.oevsv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps1.wien.gv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps2.wien.gv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps3.wien.gv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps4.wien.gv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps.wien.gv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
     </Layer>
     <Layer>
       <ows:Title>Geoland Basemap Gel&#228;nde</ows:Title>
@@ -209,7 +229,11 @@
       <TileMatrixSetLink>
         <TileMatrixSet>google3857_0-17</TileMatrixSet>
       </TileMatrixSetLink>
-      <ResourceURL format="image/jpeg" template="https://repeater.oevsv.at/basemap/bmapgelaende/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps1.wien.gv.at/basemap/bmapgelaende/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps2.wien.gv.at/basemap/bmapgelaende/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps3.wien.gv.at/basemap/bmapgelaende/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps4.wien.gv.at/basemap/bmapgelaende/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps.wien.gv.at/basemap/bmapgelaende/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
     </Layer>
     <Layer>
       <ows:Title>Geoland Basemap Oberfl&#228;che</ows:Title>
@@ -226,7 +250,11 @@
       <TileMatrixSetLink>
         <TileMatrixSet>google3857_0-17</TileMatrixSet>
       </TileMatrixSetLink>
-      <ResourceURL format="image/jpeg" template="https://repeater.oevsv.at/basemap/bmapoberflaeche/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps1.wien.gv.at/basemap/bmapoberflaeche/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps2.wien.gv.at/basemap/bmapoberflaeche/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps3.wien.gv.at/basemap/bmapoberflaeche/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps4.wien.gv.at/basemap/bmapoberflaeche/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
+      <ResourceURL format="image/jpeg" template="https://maps.wien.gv.at/basemap/bmapoberflaeche/{Style}/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
     </Layer>
     <TileMatrixSet>
       <ows:Identifier>google3857</ows:Identifier>
