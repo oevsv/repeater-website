@@ -98,10 +98,13 @@ export class FrqmapComponent implements OnInit {
   clickedLong : number;
   currentOverlay : TileLayer<TileSource>
   trxInfo: TrxInformation[] | null;
+  trxInfoDump: TrxInformation[] | null;
   pointInfo: PointInformation[] | null;
   selectedSite: Site | null;
   selectedFeature: Feature<any>;
-  sitesInfo: [Site];
+  sitesInfo: Site[];
+  filterFrequency: String;
+  filterName: String;
 
 
 
@@ -162,6 +165,8 @@ export class FrqmapComponent implements OnInit {
 
       that.map.getTargetElement().style.cursor = hit ? 'pointer' : '';
     });
+
+    this.dumpSiteInfosForFiltering();
 
     this.map.on('click', (e) => {
       let coordsWgs84 = olProj.transform(e.coordinate,'EPSG:3857', 'EPSG:4326');
@@ -286,15 +291,37 @@ export class FrqmapComponent implements OnInit {
     console.log(url);
 
     this.http.get<[Site]>(url)
-      .subscribe((response: [Site]) => {
-        this.sitesInfo = response;
-        this.drawSitesOnMap(response)
+      .subscribe((response: Site[]) => {
+        var filteredSites = this.trxInfoDump?.filter((trx) => {
+          var search_term_freq = (this.filterFrequency ?? "").replaceAll(/[^0-9]/g, '');
+          var haystack_freq = (trx.frequency_rx + " " + trx.frequency_tx).replaceAll(/[^0-9]/g, '');
+
+          var search_term_name = (this.filterName ?? "").toLowerCase();
+          var haystack_name = (trx.callsign + " " + trx.site_name).toLowerCase();
+
+          return haystack_freq.includes(search_term_freq) && haystack_name.includes(search_term_name);
+        });
+
+        var filteredResponse = response.filter((site) => {
+          if (filteredSites) {
+            var trx = filteredSites.find((trx) => {
+              return trx.site_name === site.site_name
+            });
+            if (trx) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        this.sitesInfo = filteredResponse;
+        this.drawSitesOnMap(filteredResponse)
         if (this.selectedSite)
         this.loadInformationForSite(this.selectedSite.site_name)
       })
   }
 
-  private drawSitesOnMap(sites: [Site]) {
+  private drawSitesOnMap(sites: Site[]) {
     //https://openlayers.org/en/latest/examples/icon.html
 
     // remove layer if it exists
@@ -437,6 +464,25 @@ export class FrqmapComponent implements OnInit {
           */
         }
 
+      })
+  }
+
+  private dumpSiteInfosForFiltering() {
+    let url=`${baseUrl}/trx_type`;
+
+
+    this.http.get<TrxInformation[]>(url, {
+      headers: {
+        "Accept": "application/json"
+      }
+    })
+      .subscribe((val) => {
+        if (val.length > 0) {
+          this.trxInfoDump = val
+        }
+        else {
+          this.trxInfoDump=null;
+        }
       })
   }
 

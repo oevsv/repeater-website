@@ -18,6 +18,12 @@
               </ng-container>
             </option>
           </select>
+          <label for="frequency_filter" class="uk-margin-small-right uk-margin-small-left" i18n="@@frequency">Frequency: </label>
+          <input type="text" class="uk-input uk-width-auto" id="frequency_filter" name="frequency_filter"
+                 [(ngModel)]="filterFrequency" (ngModelChange)="loadSites()">
+          <label for="name_filter" class="uk-margin-small-right uk-margin-small-left" i18n="@@name">Name or call sign: </label>
+          <input type="text" class="uk-input uk-width-auto" id="name_filter" name="name_filter"
+                [(ngModel)]="filterName" (ngModelChange)="loadSites()">
         </p>
 
       </form>
