@@ -294,7 +294,7 @@ export class FrqmapComponent implements OnInit {
       .subscribe((response: Site[]) => {
         var filteredSites = this.trxInfoDump?.filter((trx) => {
           var search_term_freq = (this.filterFrequency ?? "").replaceAll(/[^0-9]/g, '');
-          var haystack_freq = (trx.frequency_rx + " " + trx.frequency_tx).replaceAll(/[^0-9]/g, '');
+          var haystack_freq = (trx.frequency_rx*1000 + " " + trx.frequency_tx*1000).replaceAll(/[^0-9]/g, '');
 
           var search_term_name = (this.filterName ?? "").toLowerCase();
           var haystack_name = (trx.callsign + " " + trx.site_name).toLowerCase();
