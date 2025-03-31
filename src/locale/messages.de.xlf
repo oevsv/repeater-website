@@ -101,12 +101,20 @@
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details1" datatype="html">
-        <source> Klicken Sie auf einen Repeater um weitere Informationen zu erhalten. Diese werden je nach Browser rechts oder unterhalb der Karte angezeigt</source>
+        <source> Klicken Sie auf einen Repeater um weitere Informationen zu erhalten. Diese werden je nach Browser rechts oder unterhalb der Karte angezeigt
+        <p></p>Eine interaktive Karte aller Repeater finden Sie</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
       </trans-unit>
+            <trans-unit id="introtext_details1a" datatype="html">
+              <source> hier</source>
+              <context-group purpose="location">
+                <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+                <context context-type="linenumber">54</context>
+              </context-group>
+            </trans-unit>
       <trans-unit id="introtext_details2" datatype="html">
         <source> Zusätzliche Informationen wie ausdruckbare Karten, Codeplugs und Open Data finden Sie</source>
         <context-group purpose="location">
