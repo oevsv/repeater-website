@@ -1,11 +1,12 @@
-np# Amateur radio repeaters
+# Amateur radio repeaters
 
 This website shows Austrian Amateur radio repeaters.
 
 ## Prerequisites
 
-This project depends on `nodejs`, `npm` and `angular`. If not installed, please install [nodejs/npm](https://nodejs.org/en/)
-and angular cli using `npm install -g @angular/cli`. All other dependencies can be installed using `npm install`.
+This project depends on `nodejs`, `npm` and `angular`. It targets **Angular 22** and requires **Node.js 22 LTS**
+(or newer; Node 18 is no longer supported). If not installed, please install [nodejs/npm](https://nodejs.org/en/)
+and the Angular CLI using `npm install -g @angular/cli`. All other dependencies can be installed using `npm install`.
 
 ## Development server
 
@@ -13,7 +14,9 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app w
 
 ## Build for deployment
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.  
+Run `ng build` to build the project. With the Angular application builder the localized build artifacts are
+stored under `dist/frq-map/browser/<locale>/` (i.e. `.../browser/en/` and `.../browser/de/`); serve each locale
+from its sub-directory.  
 The individual steps can also be found in the corresponding [GitHub action](https://github.com/oevsv/repeater-website/blob/master/.github/workflows/main.yml). 
 The up-to-date pages can be found in the `build` branch.
 

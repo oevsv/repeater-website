@@ -1,0 +1,102 @@
+@if (store.selectedSite(); as site) {
+  <div class="alignToStart uk-width-expand">
+    <h3 i18n="@@trx_information">Site {{ site.site_name }} {{ site.locator_short }}</h3>
+
+    <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
+      <thead>
+        <tr>
+          <th class="uk-text-left" i18n="@@parmeter">Parameter</th>
+          <th class="uk-text-right" i18n="@@value">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <ng-container i18n="@@supports">Site supports</ng-container>
+          </td>
+          <td class="uk-text-right valueColumn">
+            @if (site.fm) {
+              <div i18n="@@fm">FM</div>
+            }
+            @if (site.dmr) {
+              <div i18n="@@dmr">DMR</div>
+            }
+            @if (site.c4fm) {
+              <div i18n="@@c4fm">C4fm</div>
+            }
+            @if (site.dstar) {
+              <div i18n="@@dstar">Dstar</div>
+            }
+            @if (site.tetra) {
+              <div i18n="@@tetra">Tetra</div>
+            }
+            @if (site.beacon) {
+              <div i18n="@@beacon">Beacon</div>
+            }
+            @if (site.atv) {
+              <div i18n="@@atv">ATV</div>
+            }
+            @if (site.digipeater) {
+              <div i18n="@@digipeater">Digipeater</div>
+            }
+          </td>
+        </tr>
+        @if (site.city) {
+          <tr>
+            <td>
+              <ng-container i18n="@@city">Next city</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{ site.city }}</td>
+          </tr>
+        }
+        @if (site.latitude_formated) {
+          <tr>
+            <td>
+              <ng-container i18n="@@latitude">Latitude</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{ site.latitude_formated }}</td>
+          </tr>
+        }
+        @if (site.longitude_formated) {
+          <tr>
+            <td>
+              <ng-container i18n="@@longitude">Longitude</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{ site.longitude_formated }}</td>
+          </tr>
+        }
+        @if (site.locator_long) {
+          <tr>
+            <td>
+              <ng-container i18n="@@locator">Locator</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{ site.locator_long }}</td>
+          </tr>
+        }
+        @if (site.sea_level) {
+          <tr>
+            <td>
+              <ng-container i18n="@@sea_level">Sea level</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">
+              {{ site.sea_level }}&nbsp;<ng-container i18n="@@meter1">m</ng-container>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (store.trxInfo(); as transceivers) {
+    <div class="uk-flex uk-flex-column fullHeight">
+      <div class="alignToStart uk-width-expand">
+        <h4>
+          <ng-container i18n="@@radios">Details</ng-container>
+        </h4>
+        @for (trx of transceivers; track trx.callsign + '-' + trx.frequency_tx) {
+          <app-trx-detail [trx]="trx" />
+        }
+      </div>
+    </div>
+  }
+}

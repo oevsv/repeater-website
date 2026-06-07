@@ -1,0 +1,13 @@
+@if (store.pointInfo(); as nearby) {
+  <div class="alignToStart uk-width-expand">
+    <h3 i18n="@@nearby">Nearby sites</h3>
+    <p i18n="@@nearbyintro">
+      Oops, there is no repeater where you clicked. But here is a list of nearby sites:
+    </p>
+    <ul>
+      @for (site of nearby; track site.site_name) {
+        <li>{{ site.distance / 1000 | number: '1.1-1' }} km for site {{ site.site_name }}</li>
+      }
+    </ul>
+  </div>
+}

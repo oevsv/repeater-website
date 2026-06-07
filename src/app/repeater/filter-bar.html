@@ -1,0 +1,44 @@
+<form class="uk-form uk-padding-remove uk-margin-top-50">
+  <p>
+    <label for="statistik_type" class="uk-margin-small-right" i18n="@@operator">Repeater type: </label>
+    @if (store.types().length) {
+      <select
+        class="uk-select uk-width-auto"
+        id="statistik_type"
+        name="statistik_type"
+        [ngModel]="store.selectedType()"
+        (ngModelChange)="store.setSelectedType($event)"
+      >
+        @for (repeaterType of store.types(); track repeaterType.label) {
+          <option [value]="repeaterType.type ?? 'null'">
+            @if (repeaterType.label === '@all') {
+              <ng-container i18n="@@allTypes">All repeater</ng-container>
+            } @else {
+              {{ repeaterType.label }}
+            }
+          </option>
+        }
+      </select>
+    }
+
+    <label for="frequency_filter" class="uk-margin-small-right uk-margin-small-left" i18n="@@frequency">Frequency: </label>
+    <input
+      type="text"
+      class="uk-input uk-width-auto"
+      id="frequency_filter"
+      name="frequency_filter"
+      [ngModel]="store.filterFrequency()"
+      (ngModelChange)="store.setFilterFrequency($event)"
+    />
+
+    <label for="name_filter" class="uk-margin-small-right uk-margin-small-left" i18n="@@name">Name or call sign: </label>
+    <input
+      type="text"
+      class="uk-input uk-width-auto"
+      id="name_filter"
+      name="name_filter"
+      [ngModel]="store.filterName()"
+      (ngModelChange)="store.setFilterName($event)"
+    />
+  </p>
+</form>

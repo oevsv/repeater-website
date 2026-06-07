@@ -1,0 +1,230 @@
+<h4 class="uk-margin-top-50 uk-margin-remove-bottom">
+  {{ trx().callsign }} {{ trx().frequency_tx | number: '1.3-4' }} MHz
+</h4>
+<table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
+  <thead>
+    <tr>
+      <th class="uk-text-left" i18n="@@parmeter">Parameter</th>
+      <th class="uk-text-right" i18n="@@value">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <ng-container i18n="@@trxsupports">Radio mode</ng-container>
+      </td>
+      <td class="uk-text-right valueColumn">
+        @if (trx().fm) {
+          <div i18n="@@fm">FM</div>
+        }
+        @if (trx().dmr) {
+          <div i18n="@@dmr">DMR</div>
+        }
+        @if (trx().c4fm) {
+          <div i18n="@@c4fm">C4fm</div>
+        }
+        @if (trx().dstar) {
+          <div i18n="@@dstar">Dstar</div>
+        }
+        @if (trx().tetra) {
+          <div i18n="@@tetra">Tetra</div>
+        }
+        @if (trx().beacon) {
+          <div i18n="@@beacon">Beacon</div>
+        }
+        @if (trx().atv) {
+          <div i18n="@@atv">ATV</div>
+        }
+        @if (trx().digipeater) {
+          <div i18n="@@digipeater">Digipeater</div>
+        }
+        @if (trx().other_mode_name) {
+          <div>{{ trx().other_mode_name }}</div>
+        }
+      </td>
+    </tr>
+    @if (trx().frequency_tx) {
+      <tr>
+        <td>
+          <ng-container i18n="@@frequency_tx">Frequency TX (downlink)</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          {{ trx().frequency_tx | number: '1.3-4' }}&nbsp;<ng-container i18n="@@mbits">MHz</ng-container>
+          @if (trx().ch) {
+            <div>
+              {{ trx().ch }}
+              @if (trx().ch_new) {
+                <div>({{ trx().ch_new }})</div>
+              }
+            </div>
+          }
+        </td>
+      </tr>
+    }
+    @if (trx().frequency_rx) {
+      <tr>
+        <td>
+          <ng-container i18n="@@frequency_rx">Frequency RX (uplink)</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          {{ trx().frequency_rx | number: '1.3-4' }}&nbsp;<ng-container i18n="@@mbits">MHz</ng-container>
+        </td>
+      </tr>
+    }
+    @if (trx().ctcss_rx) {
+      <tr>
+        <td>
+          <ng-container i18n="@@ctcss_rx">CTCSS RX (uplink)</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          {{ trx().ctcss_rx | number: '1.1-1' }}&nbsp;<ng-container i18n="@@hz">Hz</ng-container>
+        </td>
+      </tr>
+    }
+    @if (trx().fm_wakeup) {
+      <tr>
+        <td>
+          <ng-container i18n="@@fm_wakeup">FM wakeup</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().fm_wakeup }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().ctcss_tx) {
+      <tr>
+        <td>
+          <ng-container i18n="@@ctcss_tx">CTCSS TX (downlink)</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          {{ trx().ctcss_tx | number: '1.1-1' }}&nbsp;<ng-container i18n="@@hz">Hz</ng-container>
+        </td>
+      </tr>
+    }
+    @if (trx().sysop) {
+      <tr>
+        <td>
+          <ng-container i18n="@@sysop">Sysop</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().sysop }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().hardware) {
+      <tr>
+        <td>
+          <ng-container i18n="@@hardware">Hardware</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          {{ trx().hardware }}&nbsp;
+          @if (trx().mmdvm) {
+            <div i18n="@@mmdvm">MMDVM</div>
+          }
+        </td>
+      </tr>
+    }
+    @if (trx().battery_power || trx().solar_power) {
+      <tr>
+        <td>
+          <ng-container i18n="@@power">Power</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          @if (trx().battery_power) {
+            <div i18n="@@battery_power">Battery</div>
+          }
+          @if (trx().solar_power) {
+            <div i18n="@@solar_power">Solar</div>
+          }
+        </td>
+      </tr>
+    }
+    @if (trx().antenna_heigth) {
+      <tr>
+        <td>
+          <ng-container i18n="@@antenna_heigth">Antenna heigth)</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          {{ trx().antenna_heigth | number: '1.1-1' }}&nbsp;<ng-container i18n="@@meter2">m</ng-container>
+        </td>
+      </tr>
+    }
+    @if (trx().url) {
+      <tr>
+        <td>
+          <ng-container i18n="@@url">Web page</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          <a [href]="trx().url">{{ trx().url | shortenUrl }}</a>
+        </td>
+      </tr>
+    }
+    @if (trx().echolink) {
+      <tr>
+        <td>
+          <ng-container i18n="@@echolink">Echolink</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().echolink_id }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().digital_id) {
+      <tr>
+        <td>
+          <ng-container i18n="@@digital_id">Digital ID</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().digital_id }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().ipsc2 || trx().brandmeister) {
+      <tr>
+        <td>
+          <ng-container i18n="@@dmr_network">DMR network</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">
+          @if (trx().ipsc2) {
+            <div i18n="@@ipsc2">IPSC2</div>
+          }
+          @if (trx().brandmeister) {
+            <div i18n="@@brandmeister">BM</div>
+          }
+        </td>
+      </tr>
+    }
+    @if (trx().cc) {
+      <tr>
+        <td>
+          <ng-container i18n="@@cc">Color code</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().cc }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().c4fm_groups) {
+      <tr>
+        <td>
+          <ng-container i18n="@@c4fm_groups">C4fm groups</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().c4fm_groups }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().dstar_rpt1) {
+      <tr>
+        <td>
+          <ng-container i18n="@@dstar_rpt1">Dstar RPT1</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().dstar_rpt1 }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().dstar_rpt2) {
+      <tr>
+        <td>
+          <ng-container i18n="@@dstar_rpt2">Dstar RPT2</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().dstar_rpt2 }}&nbsp;</td>
+      </tr>
+    }
+    @if (trx().comment) {
+      <tr>
+        <td>
+          <ng-container i18n="@@comment">Comment</ng-container>
+        </td>
+        <td class="uk-text-right valueColumn">{{ trx().comment }}&nbsp;</td>
+      </tr>
+    }
+  </tbody>
+</table>
