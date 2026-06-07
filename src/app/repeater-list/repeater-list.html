@@ -1,0 +1,60 @@
+<div class="uk-section-default uk-section">
+  <div class="uk-container uk-container-large">
+    <h2 i18n="@@listTitle">Repeater list</h2>
+    <p>
+      <a [routerLink]="['/']" i18n="@@backToMap">Back to the map</a>
+    </p>
+
+    <form class="uk-margin" (submit)="$event.preventDefault()">
+      <input
+        class="uk-input uk-form-width-large"
+        type="text"
+        name="listFilter"
+        [ngModel]="filterText()"
+        (ngModelChange)="filterText.set($event)"
+        i18n-placeholder="@@listFilter"
+        placeholder="Filter by call sign, site or band"
+      />
+      <span class="uk-margin-small-left">{{ rows().length }}&nbsp;<ng-container i18n="@@listCount">repeaters</ng-container></span>
+    </form>
+
+    <div class="uk-overflow-auto">
+      <table class="uk-table uk-table-small uk-table-divider uk-table-hover">
+        <thead>
+          <tr>
+            <th class="sortable" (click)="sortBy('callsign')"><ng-container i18n="@@callsign">Call sign</ng-container>{{ sortIndicator('callsign') }}</th>
+            <th class="sortable" (click)="sortBy('site_name')"><ng-container i18n="@@siteColumn">Site</ng-container>{{ sortIndicator('site_name') }}</th>
+            <th class="sortable" (click)="sortBy('band')"><ng-container i18n="@@band">Band</ng-container>{{ sortIndicator('band') }}</th>
+            <th class="sortable uk-text-right" (click)="sortBy('frequency_tx')"><ng-container i18n="@@frequency_tx">Frequency TX (downlink)</ng-container>{{ sortIndicator('frequency_tx') }}</th>
+            <th class="sortable uk-text-right" (click)="sortBy('frequency_rx')"><ng-container i18n="@@frequency_rx">Frequency RX (uplink)</ng-container>{{ sortIndicator('frequency_rx') }}</th>
+            <th i18n="@@trxsupports">Radio mode</th>
+            <th class="sortable" (click)="sortBy('sysop')"><ng-container i18n="@@sysop">Sysop</ng-container>{{ sortIndicator('sysop') }}</th>
+            <th i18n="@@url">Web page</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (trx of rows(); track trx.callsign + '-' + trx.frequency_tx) {
+            <tr>
+              <td>{{ trx.callsign }}</td>
+              <td>{{ trx.site_name }}</td>
+              <td>{{ trx.band }}</td>
+              <td class="uk-text-right">{{ trx.frequency_tx | number: '1.3-4' }}</td>
+              <td class="uk-text-right">{{ trx.frequency_rx | number: '1.3-4' }}</td>
+              <td>{{ modes(trx) }}</td>
+              <td>{{ trx.sysop }}</td>
+              <td>
+                @if (trx.url) {
+                  <a [href]="trx.url">{{ trx.url | shortenUrl }}</a>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" i18n="@@listEmpty">No repeaters found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

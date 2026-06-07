@@ -62,6 +62,13 @@
   word-break: keep-all;
 }
 
+/* Clickable, sortable table headers on the repeater list page. */
+.uk-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
 .legendContainer {
   max-width: 400px;
 }

@@ -23,6 +23,45 @@
       <trans-unit id="imprint" datatype="html">
         <source>Impressum</source>
       </trans-unit>
+      <trans-unit id="listTitle" datatype="html">
+        <source>Repeaterliste</source>
+      </trans-unit>
+      <trans-unit id="backToMap" datatype="html">
+        <source>Zurück zur Karte</source>
+      </trans-unit>
+      <trans-unit id="listFilter" datatype="html">
+        <source>Nach Rufzeichen, Standort oder Band filtern</source>
+      </trans-unit>
+      <trans-unit id="listCount" datatype="html">
+        <source>Repeater</source>
+      </trans-unit>
+      <trans-unit id="callsign" datatype="html">
+        <source>Rufzeichen</source>
+      </trans-unit>
+      <trans-unit id="siteColumn" datatype="html">
+        <source>Standort</source>
+      </trans-unit>
+      <trans-unit id="band" datatype="html">
+        <source>Band</source>
+      </trans-unit>
+      <trans-unit id="frequency_tx" datatype="html">
+        <source>Frequenz TX (Downlink)</source>
+      </trans-unit>
+      <trans-unit id="frequency_rx" datatype="html">
+        <source>Frequenz RX (Uplink)</source>
+      </trans-unit>
+      <trans-unit id="trxsupports" datatype="html">
+        <source>Betriebsmodus</source>
+      </trans-unit>
+      <trans-unit id="sysop" datatype="html">
+        <source>Sysop</source>
+      </trans-unit>
+      <trans-unit id="url" datatype="html">
+        <source>Webseite</source>
+      </trans-unit>
+      <trans-unit id="listEmpty" datatype="html">
+        <source>Keine Repeater gefunden.</source>
+      </trans-unit>
       <trans-unit id="operator" datatype="html">
         <source>Repeatertyp:</source>
       </trans-unit>
@@ -122,17 +161,8 @@
       <trans-unit id="radios" datatype="html">
         <source>Details</source>
       </trans-unit>
-      <trans-unit id="trxsupports" datatype="html">
-        <source>Betriebsmodus</source>
-      </trans-unit>
-      <trans-unit id="frequency_tx" datatype="html">
-        <source>Frequenz TX (Downlink)</source>
-      </trans-unit>
       <trans-unit id="mbits" datatype="html">
         <source>MHz</source>
-      </trans-unit>
-      <trans-unit id="frequency_rx" datatype="html">
-        <source>Frequenz RX (Uplink)</source>
       </trans-unit>
       <trans-unit id="ctcss_rx" datatype="html">
         <source>CTCSS RX (Uplink)</source>
@@ -145,9 +175,6 @@
       </trans-unit>
       <trans-unit id="ctcss_tx" datatype="html">
         <source>CTCSS TX (Downlink)</source>
-      </trans-unit>
-      <trans-unit id="sysop" datatype="html">
-        <source>Sysop</source>
       </trans-unit>
       <trans-unit id="hardware" datatype="html">
         <source>Hardware</source>
@@ -169,9 +196,6 @@
       </trans-unit>
       <trans-unit id="meter2" datatype="html">
         <source>m</source>
-      </trans-unit>
-      <trans-unit id="url" datatype="html">
-        <source>Webseite</source>
       </trans-unit>
       <trans-unit id="echolink" datatype="html">
         <source>Echolink</source>

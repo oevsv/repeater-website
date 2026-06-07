@@ -51,6 +51,121 @@
           <context context-type="linenumber">124,125</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="listTitle" datatype="html">
+        <source>Repeater list</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">3,5</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
+          <context context-type="linenumber">4,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="backToMap" datatype="html">
+        <source>Back to the map</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">5,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listFilter" datatype="html">
+        <source>Filter by call sign, site or band</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">16,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listCount" datatype="html">
+        <source>repeaters</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="callsign" datatype="html">
+        <source>Call sign</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="siteColumn" datatype="html">
+        <source>Site</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="band" datatype="html">
+        <source>Band</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="frequency_tx" datatype="html">
+        <source>Frequency TX (downlink)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">28</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
+          <context context-type="linenumber">49,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="frequency_rx" datatype="html">
+        <source>Frequency RX (uplink)</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
+          <context context-type="linenumber">67,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="trxsupports" datatype="html">
+        <source>Radio mode</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">30,31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
+          <context context-type="linenumber">14,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="sysop" datatype="html">
+        <source>Sysop</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="url" datatype="html">
+        <source>Web page</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
+          <context context-type="linenumber">151,152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listEmpty" datatype="html">
+        <source>No repeaters found.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/repeater-list/repeater-list.html</context>
+          <context context-type="linenumber">53,55</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="operator" datatype="html">
         <source>Repeater type: </source>
         <context-group purpose="location">
@@ -97,56 +212,56 @@
         <source>Austrian Amateur radio repeaters</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">3,6</context>
+          <context context-type="linenumber">3,4</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext" datatype="html">
         <source>Welcome to the repeater page of the ÖVSV</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">22,24</context>
+          <context context-type="linenumber">23,25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details1" datatype="html">
         <source>Click on a repeater for further details. An interactive table of all repeaters can be found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">25,27</context>
+          <context context-type="linenumber">26,28</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details1a" datatype="html">
         <source>here</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">28,30</context>
+          <context context-type="linenumber">29,31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details2" datatype="html">
         <source>Further information including downloadable repeater information, code plugs and Open Data can be found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">32,34</context>
+          <context context-type="linenumber">33,35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details3" datatype="html">
         <source>here</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details4" datatype="html">
         <source>.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">37,38</context>
+          <context context-type="linenumber">38,39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details5" datatype="html">
         <source>Please send your feedback/updates to</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/repeater-map.html</context>
-          <context context-type="linenumber">40,41</context>
+          <context context-type="linenumber">41,42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="trx_information" datatype="html">
@@ -322,20 +437,6 @@
           <context context-type="linenumber">94,95</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="trxsupports" datatype="html">
-        <source>Radio mode</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
-          <context context-type="linenumber">14,15</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="frequency_tx" datatype="html">
-        <source>Frequency TX (downlink)</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
-          <context context-type="linenumber">49,50</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="mbits" datatype="html">
         <source>MHz</source>
         <context-group purpose="location">
@@ -345,13 +446,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
           <context context-type="linenumber">70,71</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="frequency_rx" datatype="html">
-        <source>Frequency RX (uplink)</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
-          <context context-type="linenumber">67,68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ctcss_rx" datatype="html">
@@ -384,13 +478,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
           <context context-type="linenumber">95,96</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="sysop" datatype="html">
-        <source>Sysop</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
-          <context context-type="linenumber">105,106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="hardware" datatype="html">
@@ -440,13 +527,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
           <context context-type="linenumber">144,145</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="url" datatype="html">
-        <source>Web page</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/repeater/trx-detail.html</context>
-          <context context-type="linenumber">151,152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="echolink" datatype="html">

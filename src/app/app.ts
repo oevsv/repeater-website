@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
-import { RepeaterMap } from './repeater/repeater-map';
-
-/** Application shell: page chrome (header, breadcrumbs, footer) around the map. */
+/** Application shell: page chrome (header, breadcrumbs, footer) around the routed pages. */
 @Component({
   selector: 'app-root',
-  imports: [RepeaterMap],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

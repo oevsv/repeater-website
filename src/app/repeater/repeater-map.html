@@ -1,6 +1,7 @@
 <div class="uk-section-default uk-section">
   <div class="uk-container">
     <h2 i18n="@@cardMobile">Austrian Amateur radio repeaters</h2>
+    <a [routerLink]="['/', listPath]" i18n="@@listTitle">Repeater list</a>
   </div>
 
   <div class="uk-container uk-container-xlarge">
@@ -25,7 +26,7 @@
                   >Click on a repeater for further details. An interactive table of all repeaters can be
                   found</ng-container
                 >
-                <a href="/list" i18n="@@introtext_details1a">here</a>.
+                <a [routerLink]="['/', listPath]" i18n="@@introtext_details1a">here</a>.
               </p>
               <p>
                 <ng-container i18n="@@introtext_details2"

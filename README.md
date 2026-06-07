@@ -12,6 +12,8 @@ and the Angular CLI using `npm install -g @angular/cli`. All other dependencies 
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
+The API base URL is configured per environment in `src/environments/`. Local/development builds use the absolute public API (`https://repeater.oevsv.at/api`), so the map and repeater list show real data when surfed locally (the backend sends permissive CORS headers). Production builds use a root-relative `/api`, since the site is deployed on the same origin as the API.
+
 ## Build for deployment
 
 Run `ng build` to build the project. With the Angular application builder the localized build artifacts are

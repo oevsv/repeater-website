@@ -7,7 +7,9 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 
+import { LIST_PATH } from '../app.routes';
 import { MapService } from '../map/map.service';
 import { FilterBar } from './filter-bar';
 import { NearbyInfo } from './nearby-info';
@@ -22,13 +24,14 @@ const TILES_BASE_URL = 'https://repeater.oevsv.at/tiles';
  */
 @Component({
   selector: 'app-repeater-map',
-  imports: [FilterBar, SiteInfo, NearbyInfo],
+  imports: [FilterBar, SiteInfo, NearbyInfo, RouterLink],
   templateUrl: './repeater-map.html',
   providers: [RepeaterStore, MapService],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RepeaterMap {
   protected readonly store = inject(RepeaterStore);
+  protected readonly listPath = LIST_PATH;
   private readonly map = inject(MapService);
   private readonly destroyRef = inject(DestroyRef);
 
