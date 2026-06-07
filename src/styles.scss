@@ -1,6 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'app/scss/app.scss';
-@import "../node_modules/ol/ol.css";
+@import "../node_modules/maplibre-gl/dist/maplibre-gl.css";
 
 /* Fonts */
 @font-face{
@@ -29,11 +29,6 @@
   font-style: normal;
   font-weight: 300;
   src: url('assets/fonts/OpenSans-Light-webfont.woff');
-}
-
-.center-user-location {
-  top: 65px;
-  left: .5em;
 }
 
 /* Map + info-panel layout (shared across the repeater map components). */
