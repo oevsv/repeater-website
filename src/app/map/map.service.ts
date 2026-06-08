@@ -61,6 +61,7 @@ export class MapService {
   private ready = false;
   private pendingSites: Site[] | null = null;
   private sitesByName = new Map<string, Site>();
+  private userLocationMarker?: maplibregl.Marker;
 
   private readonly clickSubject = new Subject<MapClick>();
   readonly click$: Observable<MapClick> = this.clickSubject.asObservable();
@@ -96,13 +97,19 @@ export class MapService {
     this.map = map;
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
-    map.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        showAccuracyCircle: false,
-      }),
-      'top-left',
+
+    // We render our own persistent location marker on the `geolocate` event
+    // (the built-in dot can be hidden by the surrounding theme's global CSS).
+    const geolocate = new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: false,
+      showUserLocation: false,
+    });
+    map.addControl(geolocate, 'top-left');
+    geolocate.on('geolocate', (event: any) =>
+      this.showUserLocation(event.coords.longitude, event.coords.latitude),
     );
+
     map.addControl(new maplibregl.AttributionControl({ customAttribution: ATTRIBUTION }));
 
     map.fitBounds(AUSTRIA_BOUNDS, { padding: 20, animate: false });
@@ -340,8 +347,26 @@ export class MapService {
     }
   }
 
+  /** Shows (or moves) a persistent marker at the user's current location. */
+  private showUserLocation(longitude: number, latitude: number): void {
+    if (!this.map) {
+      return;
+    }
+    if (this.userLocationMarker) {
+      this.userLocationMarker.setLngLat([longitude, latitude]);
+      return;
+    }
+    const element = document.createElement('div');
+    element.className = 'user-location-dot';
+    this.userLocationMarker = new maplibregl.Marker({ element })
+      .setLngLat([longitude, latitude])
+      .addTo(this.map);
+  }
+
   /** Tears down the map; call from the host component's destroy hook. */
   destroy(): void {
+    this.userLocationMarker?.remove();
+    this.userLocationMarker = undefined;
     this.map?.remove();
     this.map = undefined;
     this.ready = false;

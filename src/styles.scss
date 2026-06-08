@@ -64,6 +64,16 @@
   white-space: nowrap;
 }
 
+/* Current-location marker shown when the geolocate button is pressed. */
+.user-location-dot {
+  width: 18px;
+  height: 18px;
+  background: #1da1f2;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
 .legendContainer {
   max-width: 400px;
 }
