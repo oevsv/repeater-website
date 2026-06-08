@@ -36,6 +36,11 @@
               "@angular/localize/init"
             ],
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": ["import", "global-builtin", "color-functions", "slash-div"]
+              }
+            },
             "assets": [
               {
                 "glob": "**/*",
