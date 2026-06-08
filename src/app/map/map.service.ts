@@ -49,6 +49,31 @@ const LIGHTEN = 0.12;
 const BASEMAP_MAX_ZOOM = 16;
 
 /**
+ * Optional contour lines, generated client-side from a terrarium-encoded DEM.
+ *
+ * OFF by default (empty string) — the app then makes **no** elevation requests and
+ * does not load the `maplibre-contour` library at all. To enable, set a DEM tile
+ * URL template. The simplest public source is AWS terrarium:
+ *   'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+ * NOTE: that is a third-party (Amazon) endpoint and will send tile requests there,
+ * so it is left disabled for privacy. Self-host an Austrian DEM to avoid this.
+ */
+// Terrarium-encoded DEM tile URL used to generate contour lines (see CONTOUR_DEM_URL
+// docs above). Set to '' to disable contours entirely (no external requests).
+//
+// ⚠️ The URL below points at AWS (Amazon) and is enabled for testing only — it sends
+//    each viewer's IP + map viewport to Amazon.
+//
+// To AVOID Amazon, self-host an Austrian DEM instead:
+//   1. Get an elevation model, e.g. the open 10 m DGM from data.gv.at / Geoland.at.
+//   2. Convert it to "terrarium"-encoded raster tiles, e.g. with
+//      `rio rgbify --base-val -10000 --interval 0.1 dem.tif tiles.mbtiles`
+//      (or gdal2tiles / a tippecanoe-style pipeline) and serve them with CORS.
+//   3. Point CONTOUR_DEM_URL at `https://<your-host>/dem/{z}/{x}/{y}.png`.
+//   Then no tile requests ever go to Amazon.
+const CONTOUR_DEM_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
+/**
  * Owns the MapLibre GL map instance and all source/layer manipulation.
  *
  * Provided per map component instance so map state is never shared. The public
@@ -62,6 +87,8 @@ export class MapService {
   private pendingSites: Site[] | null = null;
   private sitesByName = new Map<string, Site>();
   private userLocationMarker?: maplibregl.Marker;
+  /** Lazily-created only when contour lines are enabled (see CONTOUR_DEM_URL). */
+  private demSource?: { setupMaplibre: (gl: unknown) => void; contourProtocolUrl: (opts: any) => string };
 
   private readonly clickSubject = new Subject<MapClick>();
   readonly click$: Observable<MapClick> = this.clickSubject.asObservable();
@@ -85,6 +112,10 @@ export class MapService {
       style = json;
     } catch (error) {
       console.error('Could not load basemap style', error);
+    }
+
+    if (CONTOUR_DEM_URL) {
+      await this.setupContours();
     }
 
     const map = new maplibregl.Map({
@@ -117,6 +148,74 @@ export class MapService {
     map.on('click', (event) => this.onClick(event));
   }
 
+  /** Lazily loads `maplibre-contour` and registers the DEM protocol (opt-in only). */
+  private async setupContours(): Promise<void> {
+    try {
+      const mod: any = await import('maplibre-contour');
+      const DemSource = mod.default?.DemSource ?? mod.DemSource;
+      this.demSource = new DemSource({
+        url: CONTOUR_DEM_URL,
+        encoding: 'terrarium',
+        maxzoom: 13,
+        worker: false,
+      });
+      this.demSource!.setupMaplibre(maplibregl);
+    } catch (error) {
+      console.error('Could not initialise contour lines', error);
+    }
+  }
+
+  /** Adds the contour vector source + line layer above the basemap. */
+  private addContours(map: maplibregl.Map): void {
+    if (!this.demSource) {
+      return;
+    }
+    map.addSource('contours', {
+      type: 'vector',
+      tiles: [
+        this.demSource.contourProtocolUrl({
+          thresholds: { 9: [500, 2500], 11: [200, 1000], 13: [100, 500], 14: [50, 250], 15: [20, 100] },
+          elevationKey: 'ele',
+          levelKey: 'level',
+          contourLayer: 'contours',
+        }),
+      ],
+      maxzoom: 15,
+    });
+    map.addLayer({
+      id: 'contour-lines',
+      type: 'line',
+      source: 'contours',
+      'source-layer': 'contours',
+      paint: {
+        'line-color': 'rgba(120,94,72,0.5)',
+        'line-width': ['match', ['get', 'level'], 1, 1.4, 0.7],
+      },
+    });
+    // Elevation labels on the major (index) contours only. Uses a font that
+    // basemap.at's glyph server actually provides ("Arial Regular").
+    map.addLayer({
+      id: 'contour-labels',
+      type: 'symbol',
+      source: 'contours',
+      'source-layer': 'contours',
+      layout: {
+        'symbol-placement': 'line',
+        'text-field': ['concat', ['to-string', ['get', 'ele']], ' m'],
+        'text-font': ['Arial Regular'],
+        'text-size': 11,
+        'symbol-spacing': 250,
+        'text-max-angle': 25,
+        'text-padding': 4,
+      },
+      paint: {
+        'text-color': 'rgba(90,70,50,0.95)',
+        'text-halo-color': 'rgba(255,255,255,0.9)',
+        'text-halo-width': 1.4,
+      },
+    });
+  }
+
   /**
    * Resolves the style's relative `sprite`/`glyphs` URLs to absolute, and inlines
    * each vector source's tiles as absolute URLs (fetching its TileJSON), because
@@ -141,6 +240,31 @@ export class MapService {
         this.recolorContainer(layer['paint']);
       }
       this.hideRoadNumberShield(layer);
+      this.adjustProminence(layer);
+    }
+  }
+
+  /**
+   * De-emphasises features that are noise on a repeater (line-of-sight) map:
+   * motorways and large-city (state/district capital) labels and markers.
+   */
+  private adjustProminence(layer: Record<string, any>): void {
+    const id: string = layer['id'] ?? '';
+    const sourceLayer: string = layer['source-layer'] ?? '';
+
+    if (layer['type'] === 'line' && /AB_SS/.test(id)) {
+      layer['paint'] = layer['paint'] ?? {};
+      layer['paint']['line-opacity'] = 0.35;
+    }
+    if (/LANDESHAUPTSTADT|BEZHPTSTADT/.test(sourceLayer)) {
+      layer['paint'] = layer['paint'] ?? {};
+      if (layer['type'] === 'symbol') {
+        layer['paint']['text-opacity'] = 0.4;
+        layer['paint']['icon-opacity'] = 0.4;
+      } else if (layer['type'] === 'circle') {
+        layer['paint']['circle-opacity'] = 0.2;
+        layer['paint']['circle-stroke-opacity'] = 0.2;
+      }
     }
   }
 
@@ -377,6 +501,8 @@ export class MapService {
     if (!map) {
       return;
     }
+
+    this.addContours(map);
 
     await Promise.all([
       this.addIcon(ICON_DEFAULT, 'assets/dot_red.png'),
