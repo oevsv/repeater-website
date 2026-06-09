@@ -26,7 +26,7 @@ import {Collection, Feature, Overlay} from "ol";
 import {GeoJSON} from "ol/format";
 import VectorLayer from "ol/layer/Vector";
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
-import {Circle as CircleStyle, Fill, Icon, Stroke, Style} from "ol/style";
+import {Fill, Icon, Stroke, Style} from "ol/style";
 import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {Point} from "ol/geom";
@@ -45,14 +45,26 @@ const DESKTOP_BREAKPOINT = 960;
 /** On desktop the initial view starts 20% more zoomed in than the full-country fit. */
 const DESKTOP_INITIAL_ZOOM_FACTOR = 1.2;
 
-/** Classic "you are here" dot for the user's GPS location. */
-const USER_LOCATION_STYLE = new Style({
-  image: new CircleStyle({
-    radius: 7,
-    fill: new Fill({ color: 'rgba(0,90,200,0.9)' }),
-    stroke: new Stroke({ color: '#fff', width: 3 }),
-  }),
-});
+/** Teardrop pin marking a clicked / located point. A pin shape keeps it distinct
+ *  from the round repeater dots (which turn green/red on selection). */
+function locationPin(fill: string): Style {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">' +
+    '<path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24C24 5.37 18.63 0 12 0z"' +
+    ' fill="' + fill + '" stroke="#fff" stroke-width="2"/>' +
+    '<circle cx="12" cy="12" r="4.5" fill="#fff"/></svg>';
+  return new Style({
+    image: new Icon({
+      src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+      anchor: [0.5, 1],
+      scale: 0.8,
+    }),
+  });
+}
+/** Red pin: dropped where the user clicks a non-repeater location. */
+const CLICK_MARKER_STYLE = locationPin('#d32f2f');
+/** Blue pin: dropped at the user's GPS position by the "locate" button. */
+const LOCATE_MARKER_STYLE = locationPin('#1565c0');
 const iconImage: Style = new Style({
   image: new Icon({
     // put anchor in the middle of the icon
@@ -124,7 +136,11 @@ export class FrqmapComponent implements OnInit {
   filterFrequency: String;
   filterName: String;
 
-
+  // Single marker for the clicked / located point (red pin for map clicks,
+  // blue pin for the locate button). Distinct from the round repeater dots.
+  private readonly clickMarkerSource: VectorSource<any> = new VectorSource();
+  private clickMarkerLayer: VectorLayer<VectorSource<any>> | null = null;
+  private locationMarkerFeature: Feature<any> | null = null;
 
   constructor(
     private http : HttpClient
@@ -138,7 +154,11 @@ export class FrqmapComponent implements OnInit {
 
   private initMap(): void {
     this.map = new Map({
-      controls: defaultControls().extend([new CenterOnUserLocationControl()]),
+      controls: defaultControls().extend([
+        new CenterOnUserLocationControl({
+          onLocate: (lonLat: number[], coordinate: Coordinate) => this.handleLocated(lonLat, coordinate),
+        }),
+      ]),
       view: new View({
         center: [0, 0],
         zoom: 10
@@ -192,39 +212,52 @@ export class FrqmapComponent implements OnInit {
       this.clickedLong = coordsWgs84[0];
       this.clickedLat = coordsWgs84[1];
 
-      //maybe there are infos for this point
-      //https://openlayers.org/en/latest/examples/icon.html
-      const feature = this.map.forEachFeatureAtPixel(e.pixel, function (feature) {
-        return feature;
+      // Look for a repeater site under the cursor; ignore our own location pin
+      // so a repeater underneath still wins, and a click on the pin itself does
+      // not get treated as a repeater selection.
+      let siteFeature: Feature<any> | null = null;
+      let hitLocationMarker = false;
+      this.map.forEachFeatureAtPixel(e.pixel, (f) => {
+        if ((f as Feature<any>).getProperties().site) {
+          siteFeature = f as Feature<any>;
+          return true; // a repeater wins; stop here
+        }
+        if (f === this.locationMarkerFeature) {
+          hitLocationMarker = true;
+        }
+        return false;
       });
+
       if (this.selectedFeature) {
-        //reset old, of any
+        //reset old, if any
         this.selectedFeature.setStyle(iconImage);
       }
-      let siteUrl;
-      if (feature) {
-        console.log("feature for icon")
-        //set feature style
-        this.selectedFeature = feature as Feature<any>;
-        this.selectedFeature.setStyle(iconImageSelected);
 
-        this.selectedSite = feature.getProperties().site
+      if (siteFeature) {
+        // Clicked a repeater: select it (green) and clear the click/locate pin.
+        this.selectedFeature = siteFeature;
+        this.selectedFeature.setStyle(iconImageSelected);
+        this.selectedSite = (siteFeature as Feature<any>).getProperties().site;
         if (this.selectedSite) {
           let siteName = this.selectedSite.site_name;
           // replace spaces and slash
           let siteUrl = 'https://repeater.oevsv.at/tiles/' + siteName.replaceAll(' ', '-').replaceAll('/', '_');
-          console.log("Url for tiles of site", siteUrl);
-          console.log("Current site", siteName)
-          // remove pointInfo
           this.pointInfo = null;
+          this.clearLocationMarker();
           this.loadInformationForSite(siteName)
           this.changeOverlaySource(siteUrl)
           this.scheduleMapResize()
-
         }
-      } else {
+      } else if (hitLocationMarker) {
+        // Clicked the existing located/clicked pin: keep its marker (and colour),
+        // just (re)show the list of nearby repeaters.
         this.selectedSite = null;
-        console.log("not hit - not site here");
+        this.loadInformationForPoint(coordsWgs84);
+        this.removeOverlaySource();
+      } else {
+        // Clicked an empty location: drop a red pin and show nearby repeaters.
+        this.selectedSite = null;
+        this.showLocationMarker(e.coordinate, CLICK_MARKER_STYLE);
         this.loadInformationForPoint(coordsWgs84);
         this.removeOverlaySource();
       }
@@ -636,6 +669,37 @@ export class FrqmapComponent implements OnInit {
     }
   }
 
+  /** Drops/replaces the single location pin at the given coordinate (EPSG:3857)
+   *  with the given style (red for clicks, blue for the GPS location). */
+  private showLocationMarker(coordinate: Coordinate, style: Style): void {
+    if (!this.clickMarkerLayer) {
+      this.clickMarkerLayer = new VectorLayer({ source: this.clickMarkerSource, zIndex: 1000 });
+      this.map.addLayer(this.clickMarkerLayer);
+    }
+    this.clickMarkerSource.clear();
+    this.locationMarkerFeature = new Feature(new Point(coordinate));
+    this.locationMarkerFeature.setStyle(style);
+    this.clickMarkerSource.addFeature(this.locationMarkerFeature);
+  }
+
+  private clearLocationMarker(): void {
+    this.clickMarkerSource.clear();
+    this.locationMarkerFeature = null;
+  }
+
+  /** Called by the "locate" control: blue pin at the GPS position (kept blue, not
+   *  turned into a repeater selection) plus the list of the nearest repeaters. */
+  private handleLocated(lonLat: number[], coordinate: Coordinate): void {
+    if (this.selectedFeature) {
+      this.selectedFeature.setStyle(iconImage);
+    }
+    this.selectedSite = null;
+    this.removeOverlaySource();
+    this.showLocationMarker(coordinate, LOCATE_MARKER_STYLE);
+    this.loadInformationForPoint(lonLat);
+    this.scheduleMapResize();
+  }
+
   convertDMS(dd: number): string {
     //https://stackoverflow.com/questions/5786025/decimal-degrees-to-degrees-minutes-and-seconds-in-javascript
     var deg = dd | 0; // truncate dd to get degrees
@@ -661,11 +725,9 @@ const LOCATE_ICON =
   '</svg>';
 
 class CenterOnUserLocationControl extends Control {
-  private readonly markerSource = new VectorSource();
-  private readonly markerLayer = new VectorLayer({
-    source: this.markerSource,
-    style: USER_LOCATION_STYLE,
-  });
+  /** Called with the located point ([lon, lat] WGS84, coordinate EPSG:3857) so
+   *  the component can drop the blue pin and show the nearest repeaters. */
+  private readonly onLocate?: (lonLat: number[], coordinate: Coordinate) => void;
 
   /**
    * @param {Object} [opt_options] Control options.
@@ -685,6 +747,8 @@ class CenterOnUserLocationControl extends Control {
       element: element,
       target: options.target,
     });
+
+    this.onLocate = options.onLocate;
 
     button.addEventListener('click', this.centerMapOnUserLocation.bind(this), false);
     button.addEventListener('touchstart', this.centerMapOnUserLocation.bind(this), false);
@@ -710,12 +774,8 @@ class CenterOnUserLocationControl extends Control {
       map?.getView().setCenter(convertedCoords)
       map?.getView().setZoom(14);
 
-      // Ensure the marker layer is on the map, then mark the location.
-      if (map && !map.getLayers().getArray().includes(this.markerLayer)) {
-        map.addLayer(this.markerLayer);
-      }
-      this.markerSource.clear();
-      this.markerSource.addFeature(new Feature(new Point(convertedCoords)));
+      // Let the component drop the blue pin and show the nearest repeaters.
+      this.onLocate?.(coords, convertedCoords);
     });
   }
 }
