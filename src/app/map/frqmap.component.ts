@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import sampleResponseToReq1, {
   Filter,
@@ -26,7 +26,7 @@ import {Collection, Feature, Overlay} from "ol";
 import {GeoJSON} from "ol/format";
 import VectorLayer from "ol/layer/Vector";
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
-import {Fill, Icon, Stroke, Style} from "ol/style";
+import {Circle as CircleStyle, Fill, Icon, Stroke, Style} from "ol/style";
 import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {Point} from "ol/geom";
@@ -37,6 +37,22 @@ import { Pipe, PipeTransform } from '@angular/core';
 const baseUrl : String = "/api"
 const baseMapCapabilities: string = "assets/WMTSCapabilities.xml";
 const parser = new WMTSCapabilities();
+
+/** Austria-wide extent (EPSG:3857) used as the initial view. */
+const AUSTRIA_EXTENT: Extent = [908071, 5751733, 2047289, 6375459];
+/** Min viewport width (UIkit `@m`) treated as desktop. */
+const DESKTOP_BREAKPOINT = 960;
+/** On desktop the initial view starts 20% more zoomed in than the full-country fit. */
+const DESKTOP_INITIAL_ZOOM_FACTOR = 1.2;
+
+/** Classic "you are here" dot for the user's GPS location. */
+const USER_LOCATION_STYLE = new Style({
+  image: new CircleStyle({
+    radius: 7,
+    fill: new Fill({ color: 'rgba(0,90,200,0.9)' }),
+    stroke: new Stroke({ color: '#fff', width: 3 }),
+  }),
+});
 const iconImage: Style = new Style({
   image: new Icon({
     // put anchor in the middle of the icon
@@ -84,8 +100,10 @@ interface Site {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-frqmap',
   templateUrl: './frqmap.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./frqmap.component.scss']
 })
 export class FrqmapComponent implements OnInit {
@@ -131,8 +149,7 @@ export class FrqmapComponent implements OnInit {
 
     });
     //http://bboxfinder.com/#46.346928,9.404297,49.095452,17.144165
-    var textent : Extent = [908071,  5751733,     2047289,       6375459];
-    this.map.getView().fit(textent, {size: this.map.getSize()});
+    this.fitAustria();
 
     //add basemap layers
     this.http.get(baseMapCapabilities, {
@@ -153,6 +170,7 @@ export class FrqmapComponent implements OnInit {
           opacity: 1,
           visible: true
         })
+        this.desaturate(layer);
         this.map.getLayers().insertAt(0, layer)
         //this.map.addLayer(layer);
       });
@@ -201,6 +219,7 @@ export class FrqmapComponent implements OnInit {
           this.pointInfo = null;
           this.loadInformationForSite(siteName)
           this.changeOverlaySource(siteUrl)
+          this.scheduleMapResize()
 
         }
       } else {
@@ -211,12 +230,46 @@ export class FrqmapComponent implements OnInit {
       }
     })
 
+    // The container is often still laying out right after creation, so the first
+    // fit used a stale size; re-fit once it has its real size so Austria fills the
+    // map instead of sitting in a band of empty space.
     let timeouts = [100, 300, 1000, 3000]
     timeouts.forEach(to => {
       setTimeout(() => {
         this.map.updateSize();
+        this.fitAustria();
       }, to);
     })
+  }
+
+  /** Fits the Austria-wide extent to the current map size. On desktop the view
+   *  then zooms in 20% so it starts a bit closer than the full-country overview. */
+  private fitAustria(): void {
+    const view = this.map.getView();
+    view.fit(AUSTRIA_EXTENT, { size: this.map.getSize() });
+    if (window.innerWidth >= DESKTOP_BREAKPOINT) {
+      const resolution = view.getResolution();
+      if (resolution) {
+        view.setResolution(resolution / DESKTOP_INITIAL_ZOOM_FACTOR);
+      }
+    }
+  }
+
+  /** Renders a layer in grey tones only (the basemap.at tiles are coloured); the
+   *  repeater markers and overlays keep their colours so they stand out. */
+  private desaturate(layer: TileLayer<TileSource>): void {
+    layer.on('prerender', (event) => {
+      const context = event.context as CanvasRenderingContext2D | undefined;
+      if (context) {
+        context.filter = 'grayscale(100%)';
+      }
+    });
+    layer.on('postrender', (event) => {
+      const context = event.context as CanvasRenderingContext2D | undefined;
+      if (context) {
+        context.filter = 'none';
+      }
+    });
   }
 
   private loadOptions() {
@@ -562,6 +615,27 @@ export class FrqmapComponent implements OnInit {
 
 
 
+  /** Closes the info panel: the right column animates back to 1/5 with the intro
+   *  text, the selected site marker reverts to its normal colour, and its tile
+   *  overlay is removed. */
+  closeDetails(): void {
+    if (this.selectedFeature) {
+      this.selectedFeature.setStyle(iconImage);
+    }
+    this.selectedSite = null;
+    this.trxInfo = null;
+    this.pointInfo = null;
+    this.removeOverlaySource();
+    this.scheduleMapResize();
+  }
+
+  /** Keeps the OpenLayers canvas in sync with the panel's width animation. */
+  private scheduleMapResize(): void {
+    for (const delay of [0, 100, 200, 300, 400, 500]) {
+      setTimeout(() => this.map.updateSize(), delay);
+    }
+  }
+
   convertDMS(dd: number): string {
     //https://stackoverflow.com/questions/5786025/decimal-degrees-to-degrees-minutes-and-seconds-in-javascript
     var deg = dd | 0; // truncate dd to get degrees
@@ -575,7 +649,24 @@ export class FrqmapComponent implements OnInit {
 
 }
 
+/** "Locate me" crosshair, inlined so the control is self-contained. Uses
+ *  `currentColor` so it stays visible against the control button. */
+const LOCATE_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"' +
+  ' style="display:block;margin:auto" aria-hidden="true"' +
+  ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<circle cx="12" cy="12" r="3"/>' +
+  '<line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>' +
+  '<line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>' +
+  '</svg>';
+
 class CenterOnUserLocationControl extends Control {
+  private readonly markerSource = new VectorSource();
+  private readonly markerLayer = new VectorLayer({
+    source: this.markerSource,
+    style: USER_LOCATION_STYLE,
+  });
+
   /**
    * @param {Object} [opt_options] Control options.
    */
@@ -583,7 +674,7 @@ class CenterOnUserLocationControl extends Control {
     const options = opt_options || {};
 
     var button = document.createElement('button');
-    button.innerHTML = '&#8226;';
+    button.innerHTML = LOCATE_ICON;
 
     const element = document.createElement('div');
     element.className = 'center-user-location ol-unselectable ol-control';
@@ -615,8 +706,16 @@ class CenterOnUserLocationControl extends Control {
     ).then((coords: any) => {
       console.log("Centering map to user location ", coords)
       let convertedCoords = olProj.transform(coords, 'EPSG:4326', 'EPSG:3857')
-      this.getMap()?.getView().setCenter(convertedCoords)
-      this.getMap()?.getView().setZoom(14);
+      const map = this.getMap();
+      map?.getView().setCenter(convertedCoords)
+      map?.getView().setZoom(14);
+
+      // Ensure the marker layer is on the map, then mark the location.
+      if (map && !map.getLayers().getArray().includes(this.markerLayer)) {
+        map.addLayer(this.markerLayer);
+      }
+      this.markerSource.clear();
+      this.markerSource.addFeature(new Feature(new Point(convertedCoords)));
     });
   }
 }

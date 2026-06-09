@@ -1,11 +1,87 @@
-
-
 #map {
-  height: 600px;
-  //background-color: lightsalmon;
+  /* Match the map's shape to the Austria extent so the overview fills the canvas
+     with no empty band above/below. This also means the zoom/locate controls
+     (pinned to the top-left) sit on top of the map instead of in empty space. */
+  width: 100%;
+  aspect-ratio: 1139218 / 623726;
+}
 
-  @media (min-height: 1080px) {
-    height: 1000px;
+/* Trim the large default section/heading whitespace so the map sits higher on
+   the screen, especially on mobile. */
+.uk-section {
+  padding-top: 24px;
+  padding-bottom: 16px;
+}
+
+/* The heading is the only child of its .uk-container, so UIkit's
+   `.uk-container > :last-child { margin-bottom: 0 }` zeroes a plain `h2` rule.
+   The descendant selector outranks it to re-add a small gap below the heading. */
+.uk-container h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 959px) {
+  .uk-section {
+    padding-top: 16px;
+    padding-bottom: 10px;
+  }
+
+  .uk-container h2 {
+    margin-bottom: 6px;
+  }
+}
+
+/* Animate the right column as it grows (1/5 -> 1/3) when a site is selected.
+   The width itself is set by the toggled uk-width-*@l classes. */
+.right-panel {
+  position: relative;
+  transition: width 0.4s ease;
+}
+
+.right-panel.details-active {
+  /* Reserve space at the top-right so content never runs under the X button. */
+  padding-right: 1.75rem;
+}
+
+.details-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  padding: 0 0.25rem;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: #000;
+  }
+}
+
+/* Mobile (below UIkit's @m breakpoint): instead of stacking the info below the
+   map (off-screen), the details panel overlays the map, leaving a ~1/10 sliver
+   of map on the left. The X button (.details-close) returns to the map. */
+@media (max-width: 959px) {
+  .right-panel.details-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 90%;
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #fff;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.25);
+
+    .details-close {
+      font-size: 2.25rem;
+      padding: 0.25rem 0.5rem;
+    }
   }
 }
 

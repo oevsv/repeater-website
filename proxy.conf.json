@@ -1,0 +1,12 @@
+{
+  "/api": {
+    "target": "https://repeater.oevsv.at",
+    "secure": true,
+    "changeOrigin": true
+  },
+  "/tiles": {
+    "target": "https://repeater.oevsv.at",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

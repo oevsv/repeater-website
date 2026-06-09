@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
 
 import { FrqmapComponent } from './frqmap.component';
 
@@ -8,7 +10,9 @@ describe('FrqmapComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ FrqmapComponent ]
+      declarations: [ FrqmapComponent ],
+      imports: [ FormsModule ],          // template uses [(ngModel)]
+      providers: [ provideHttpClient() ], // component injects HttpClient
     })
     .compileComponents();
   });

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xliff version="1.2" >
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
   <file source-language="en" datatype="plaintext" original="ng2.template" target-language="de">
     <body>
       <trans-unit id="en" datatype="html">
@@ -44,6 +44,13 @@
           <context context-type="linenumber">121</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="imprint" datatype="html">
+        <source>Impressum</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">32,33</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="cardMobile" datatype="html">
         <source>Österreichische Amateurfunkrepeater</source>
         <context-group purpose="location">
@@ -65,20 +72,6 @@
           <context context-type="linenumber">15</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="imprint" datatype="html">
-        <source>Impressum</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/app.component.html</context>
-          <context context-type="linenumber">32,33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="meter3" datatype="html">
-        <source>m</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">39,40</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="frequency" datatype="html">
         <source>Frequenz:</source>
         <context-group purpose="location">
@@ -91,6 +84,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="close" datatype="html">
+        <source>Schließen</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
+          <context context-type="linenumber">41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="introtext" datatype="html">

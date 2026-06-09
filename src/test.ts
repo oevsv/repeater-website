@@ -7,19 +7,9 @@ import {
   platformBrowserDynamicTesting
 } from '@angular/platform-browser-dynamic/testing';
 
-declare const require: {
-  context(path: string, deep?: boolean, filter?: RegExp): {
-    keys(): string[];
-    <T>(id: string): T;
-  };
-};
-
-// First, initialize the Angular testing environment.
+// Initialize the Angular testing environment. The karma builder discovers and
+// loads the *.spec.ts files automatically, so no require.context() is needed.
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting()
 );
-// Then we find all the tests.
-const context = require.context('./', true, /\.spec\.ts$/);
-// And load the modules.
-context.keys().map(context);

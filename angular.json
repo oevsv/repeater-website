@@ -59,7 +59,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "2mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -88,12 +88,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
-              "browserTarget": "frq-map:build:production"
+              "buildTarget": "frq-map:build:production"
             },
             "development": {
-              "browserTarget": "frq-map:build:development"
+              "buildTarget": "frq-map:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -101,7 +104,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "frq-map:build"
+            "buildTarget": "frq-map:build"
           }
         },
         "test": {
@@ -125,7 +128,6 @@
       }
     }
   },
-  "defaultProject": "frq-map",
   "cli": {
     "analytics": false
   }

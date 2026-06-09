@@ -126,7 +126,9 @@
 </div>
 
 <!-- Content -->
-<div class="uk-section-default uk-section">
+<!-- No uk-section padding here: app-frqmap renders its own uk-section, so the
+     wrapper would otherwise double the vertical whitespace around the map. -->
+<div class="uk-section-default">
 
   <app-frqmap>
 
