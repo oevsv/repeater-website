@@ -31,6 +31,7 @@ import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
+import { RepeaterStatusService } from './repeater-status.service';
 
 
 //const baseUrl : String = "https://repeater.oevsv.at/api"
@@ -65,26 +66,77 @@ function locationPin(fill: string): Style {
 const CLICK_MARKER_STYLE = locationPin('#d32f2f');
 /** Blue pin: dropped at the user's GPS position by the "locate" button. */
 const LOCATE_MARKER_STYLE = locationPin('#1565c0');
-const iconImage: Style = new Style({
-  image: new Icon({
-    // put anchor in the middle of the icon
-    anchor: [0.5, 0.5],
-    // anchorXUnits: 'pixels',
-    // anchorYUnits: 'pixels',
-    src: 'assets/dot_red.png',
-    scale: 0.7
-  })
-})
-const iconImageSelected: Style = new Style({
-  image: new Icon({
-    // put anchor in the middle of the icon
-    anchor: [0.5, 0.5],
-    // anchorXUnits: 'pixels',
-    // anchorYUnits: 'pixels',
-    src: 'assets/dot_green.png',
-    scale: 0.7
-  })
-})
+/* --- Repeater marker -------------------------------------------------------
+ * A repeater is drawn as a transmitter-tower icon with three independently
+ * colourable elements:
+ *   - background:   the disc behind the tower. Partly-transparent dark grey when
+ *                   idle, blue when the repeater is selected (this replaces the
+ *                   former red -> green dot transition).
+ *   - tower:        the "A" mast. Reserved for online/offline status.
+ *   - transmission: the antenna waves. Reserved for transmitting/idle status.
+ * Tower and transmission start at their resting colours; updateRepeaterColors()
+ * can recolour either at any time (e.g. driven by the live status poll). The
+ * colours are baked into a rasterised SVG, so a colour change means building a
+ * fresh Icon - hence the per-feature colour state and styleRepeater(). */
+
+interface DiscColor { color: string; opacity: number; }
+
+/** Background disc: partly transparent dark grey when idle. */
+const REPEATER_BG_DEFAULT: DiscColor = { color: '#333333', opacity: 0.6 };
+/** Background disc: blue when the repeater is selected (clicked). */
+const REPEATER_BG_SELECTED: DiscColor = { color: '#1565c0', opacity: 0.9 };
+
+/** Resting colours of the tower / transmission elements. */
+const TOWER_DEFAULT = '#ffffff';
+const TRANSMISSION_DEFAULT = '#00c853';
+
+/** Status -> colour mapping for the planned live status poll. Placeholder
+ *  colours; tune once the status endpoint and its semantics are finalised. */
+const TOWER_ONLINE = '#ffffff';
+const TOWER_OFFLINE = '#e53935';        // red
+const TRANSMISSION_ACTIVE = '#00c853';  // green
+const TRANSMISSION_IDLE = '#9e9e9e';    // grey
+
+/** On-map size of the repeater marker (SVG is 128x128). */
+const REPEATER_MARKER_SCALE = 0.15;
+
+/** Builds the repeater tower marker SVG with the three colourable elements
+ *  inlined. */
+function repeaterMarkerSvg(background: DiscColor, tower: string, transmission: string): string {
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">' +
+    // background disc
+    '<circle cx="64" cy="64" r="62" fill="' + background.color +
+      '" fill-opacity="' + background.opacity + '"/>' +
+    // transmission (antenna waves)
+    '<g fill="none" stroke="' + transmission + '" stroke-width="5" stroke-linecap="round">' +
+    '<circle cx="64" cy="34" r="3" fill="' + transmission + '" stroke="none"/>' +
+    '<path d="M54 26 A14 14 0 0 0 54 42"/>' +
+    '<path d="M74 26 A14 14 0 0 1 74 42"/>' +
+    '<path d="M42 18 A28 28 0 0 0 42 50"/>' +
+    '<path d="M86 18 A28 28 0 0 1 86 50"/>' +
+    '</g>' +
+    // tower (A-frame mast)
+    '<g fill="none" stroke="' + tower + '" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M64 50 L40 106"/>' +
+    '<path d="M64 50 L88 106"/>' +
+    '<path d="M50 82 L78 82"/>' +
+    '</g>' +
+    '</svg>'
+  );
+}
+
+/** OpenLayers style for a repeater marker with the given element colours. */
+function repeaterStyle(background: DiscColor, tower: string, transmission: string): Style {
+  const svg = repeaterMarkerSvg(background, tower, transmission);
+  return new Style({
+    image: new Icon({
+      anchor: [0.5, 0.5],
+      src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+      scale: REPEATER_MARKER_SCALE,
+    }),
+  });
+}
 
 interface Site {
   site_name: string,
@@ -141,15 +193,23 @@ export class FrqmapComponent implements OnInit {
   private readonly clickMarkerSource: VectorSource<any> = new VectorSource();
   private clickMarkerLayer: VectorLayer<VectorSource<any>> | null = null;
   private locationMarkerFeature: Feature<any> | null = null;
+  // Vector source holding the repeater markers, so individual markers can be
+  // looked up by site name and recoloured (selection / live status).
+  private siteVectorSource: VectorSource<any> | null = null;
 
   constructor(
-    private http : HttpClient
+    private http : HttpClient,
+    private statusService : RepeaterStatusService
   ) { }
 
   ngOnInit(): void {
     console.log("init")
     this.loadOptions()
     this.initMap()
+    // Live status polling is wired up but the service is disabled until the
+    // status endpoint is defined, so this is a no-op for now (markers keep their
+    // default colours). See RepeaterStatusService to go live.
+    this.startStatusPolling()
   }
 
   private initMap(): void {
@@ -225,13 +285,13 @@ export class FrqmapComponent implements OnInit {
 
       if (this.selectedFeature) {
         //reset old, if any
-        this.selectedFeature.setStyle(iconImage);
+        this.deselectRepeater(this.selectedFeature);
       }
 
       if (siteFeature) {
-        // Case A: clicked a repeater - select it (green) and clear any location pin.
+        // Case A: clicked a repeater - select it (blue disc) and clear any location pin.
         this.selectedFeature = siteFeature;
-        this.selectedFeature.setStyle(iconImageSelected);
+        this.selectRepeater(this.selectedFeature);
         this.selectedSite = (siteFeature as Feature<any>).getProperties().site;
         if (this.selectedSite) {
           let siteName = this.selectedSite.site_name;
@@ -411,9 +471,15 @@ export class FrqmapComponent implements OnInit {
     sites.forEach((site) => {
       let feature = new Feature({
         geometry: new Point([site.longitude, site.latitude]).transform('EPSG:4326','EPSG:3857'),
-        site: site
+        site: site,
+        // Per-feature marker colour state so each element can be recoloured
+        // independently: selection drives the background disc, while live status
+        // drives the tower (online/offline) and transmission (transmitting/idle).
+        selected: false,
+        towerColor: TOWER_DEFAULT,
+        txColor: TRANSMISSION_DEFAULT
       })
-      feature.setStyle(iconImage);
+      this.styleRepeater(feature);
       feature.setId(site.site_name);
       featureList.push(feature);
     })
@@ -423,6 +489,7 @@ export class FrqmapComponent implements OnInit {
       const vectorSource = new VectorSource({
         features: featureList
       });
+      this.siteVectorSource = vectorSource;
       const vectorLayer = new VectorLayer({
         source: vectorSource
       });
@@ -645,7 +712,7 @@ export class FrqmapComponent implements OnInit {
    *  overlay is removed. */
   closeDetails(): void {
     if (this.selectedFeature) {
-      this.selectedFeature.setStyle(iconImage);
+      this.deselectRepeater(this.selectedFeature);
     }
     this.selectedSite = null;
     this.trxInfo = null;
@@ -679,11 +746,65 @@ export class FrqmapComponent implements OnInit {
     this.locationMarkerFeature = null;
   }
 
+  /** (Re)applies a repeater feature's current colours to its style. The disc is
+   *  blue when selected, grey otherwise; the tower and transmission colours come
+   *  from the feature's own state. Call after changing any colour property. */
+  private styleRepeater(feature: Feature<any>): void {
+    const background = feature.get('selected') ? REPEATER_BG_SELECTED : REPEATER_BG_DEFAULT;
+    const tower = feature.get('towerColor') ?? TOWER_DEFAULT;
+    const transmission = feature.get('txColor') ?? TRANSMISSION_DEFAULT;
+    feature.setStyle(repeaterStyle(background, tower, transmission));
+  }
+
+  /** Marks a repeater selected (blue disc). */
+  private selectRepeater(feature: Feature<any>): void {
+    feature.set('selected', true);
+    this.styleRepeater(feature);
+  }
+
+  /** Reverts a repeater to its unselected (grey disc) state. */
+  private deselectRepeater(feature: Feature<any>): void {
+    feature.set('selected', false);
+    this.styleRepeater(feature);
+  }
+
+  /** Recolours a single repeater's tower and/or transmission element in place,
+   *  preserving its selection state. Intended for live status updates: pass the
+   *  site name and the new colour(s). No-op if that site is not on the map. */
+  updateRepeaterColors(siteName: string, colors: { tower?: string; transmission?: string }): void {
+    const feature = this.siteVectorSource?.getFeatureById(siteName) as Feature<any> | null;
+    if (!feature) {
+      return;
+    }
+    if (colors.tower !== undefined) {
+      feature.set('towerColor', colors.tower);
+    }
+    if (colors.transmission !== undefined) {
+      feature.set('txColor', colors.transmission);
+    }
+    this.styleRepeater(feature);
+  }
+
+  /** Subscribes to the live status poll: every 3s each repeater's tower colour is
+   *  updated from its online/offline state and its transmission colour from its
+   *  transmitting/idle state. While the status service is disabled this completes
+   *  immediately without doing anything (see RepeaterStatusService). */
+  private startStatusPolling(): void {
+    this.statusService.poll().subscribe((statuses) => {
+      for (const status of statuses) {
+        this.updateRepeaterColors(status.site_name, {
+          tower: status.online ? TOWER_ONLINE : TOWER_OFFLINE,
+          transmission: status.transmitting ? TRANSMISSION_ACTIVE : TRANSMISSION_IDLE,
+        });
+      }
+    });
+  }
+
   /** Called by the "locate" control: blue pin at the GPS position (kept blue, not
    *  turned into a repeater selection) plus the list of the nearest repeaters. */
   private handleLocated(lonLat: number[], coordinate: Coordinate): void {
     if (this.selectedFeature) {
-      this.selectedFeature.setStyle(iconImage);
+      this.deselectRepeater(this.selectedFeature);
     }
     this.selectedSite = null;
     this.removeOverlaySource();
