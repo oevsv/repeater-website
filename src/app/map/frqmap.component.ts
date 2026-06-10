@@ -212,18 +212,13 @@ export class FrqmapComponent implements OnInit {
       this.clickedLong = coordsWgs84[0];
       this.clickedLat = coordsWgs84[1];
 
-      // Look for a repeater site under the cursor; ignore our own location pin
-      // so a repeater underneath still wins, and a click on the pin itself does
-      // not get treated as a repeater selection.
+      // Look for a repeater site under the cursor. Our own location pin carries no
+      // `site` property, so a click on it is treated as a plain location click.
       let siteFeature: Feature<any> | null = null;
-      let hitLocationMarker = false;
       this.map.forEachFeatureAtPixel(e.pixel, (f) => {
         if ((f as Feature<any>).getProperties().site) {
           siteFeature = f as Feature<any>;
           return true; // a repeater wins; stop here
-        }
-        if (f === this.locationMarkerFeature) {
-          hitLocationMarker = true;
         }
         return false;
       });
@@ -234,7 +229,7 @@ export class FrqmapComponent implements OnInit {
       }
 
       if (siteFeature) {
-        // Clicked a repeater: select it (green) and clear the click/locate pin.
+        // Case A: clicked a repeater - select it (green) and clear any location pin.
         this.selectedFeature = siteFeature;
         this.selectedFeature.setStyle(iconImageSelected);
         this.selectedSite = (siteFeature as Feature<any>).getProperties().site;
@@ -248,18 +243,15 @@ export class FrqmapComponent implements OnInit {
           this.changeOverlaySource(siteUrl)
           this.scheduleMapResize()
         }
-      } else if (hitLocationMarker) {
-        // Clicked the existing located/clicked pin: keep its marker (and colour),
-        // just (re)show the list of nearby repeaters.
-        this.selectedSite = null;
-        this.loadInformationForPoint(coordsWgs84);
-        this.removeOverlaySource();
       } else {
-        // Clicked an empty location: drop a red pin and show nearby repeaters.
+        // Case B: clicked a non-repeater location (including an existing red/blue
+        // pin - which gets replaced). Drop a red pin, grow the panel and show the
+        // nearest repeaters.
         this.selectedSite = null;
         this.showLocationMarker(e.coordinate, CLICK_MARKER_STYLE);
         this.loadInformationForPoint(coordsWgs84);
         this.removeOverlaySource();
+        this.scheduleMapResize();
       }
     })
 
