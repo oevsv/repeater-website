@@ -403,6 +403,10 @@ export class FrqmapComponent implements OnInit {
 
  loadSites() {
    console.log("loadSites");
+    // A filter change (repeater type / frequency / call sign) rebuilds the marker
+    // set and may drop the currently selected repeater. Remove its coverage
+    // overlay so a stale coverage layer doesn't linger over the refiltered map.
+    this.removeOverlaySource();
     let param = this.selectedType;
     console.log("loadSites; type set to ",param);
     //synchronize selectedTypeLabel
