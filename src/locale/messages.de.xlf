@@ -534,6 +534,106 @@
           <context context-type="linenumber">382,383</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="listHeading" datatype="html">
+        <source>Repeater Liste</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listSearch" datatype="html">
+        <source>Suchen…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listExport" datatype="html">
+        <source>CSV Export</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listCallsign" datatype="html">
+        <source>Rufzeichen</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listType" datatype="html">
+        <source>Typ</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listBand" datatype="html">
+        <source>Band</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listSite" datatype="html">
+        <source>Standort</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="listModes" datatype="html">
+        <source>Modi</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.html</context>
+          <context context-type="linenumber">70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="typeAll" datatype="html">
+        <source>Alle Typen</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="typeVoice" datatype="html">
+        <source>Sprechfunk</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="typeBeacon" datatype="html">
+        <source>Baken</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="typeDigipeater" datatype="html">
+        <source>Digipeater</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="typeATV" datatype="html">
+        <source>ATV</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/list/list.component.ts</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="bcRepeaterMap" datatype="html">
+        <source>Repeater-Map</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">125</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="bcLinks" datatype="html">
+        <source>Links</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">128</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

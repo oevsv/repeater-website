@@ -121,18 +121,21 @@
       <li class="uk-breadcrumb">
         <a i18n="@@frequencies"  href="https://www.oevsv.at/funkbetrieb/ukw-referat/" title="ÖVSV HQ VHF">VHF Mgmt</a>
       </li>
+      <li>
+        <a *ngIf="isListPage; else mapCurrent" routerLink="/" i18n="@@bcRepeaterMap">Repeater-Map</a>
+        <ng-template #mapCurrent><span i18n="@@bcRepeaterMap">Repeater-Map</span></ng-template>
+      </li>
+      <li *ngIf="isListPage"><span i18n="@@bcLinks">Links</span></li>
     </ul>
   </div>
 </div>
 
 <!-- Content -->
-<!-- No uk-section padding here: app-frqmap renders its own uk-section, so the
-     wrapper would otherwise double the vertical whitespace around the map. -->
+<!-- No uk-section padding here: the routed pages render their own uk-section, so
+     the wrapper would otherwise double the vertical whitespace. -->
 <div class="uk-section-default">
 
-  <app-frqmap>
-
-  </app-frqmap>
+  <router-outlet></router-outlet>
 
 </div>
 <!-- Footer -->
@@ -147,4 +150,3 @@
   <ng-container i18n="@@imprint">
     Legal notice</ng-container>
 </a>
-<router-outlet></router-outlet>

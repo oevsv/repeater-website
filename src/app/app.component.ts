@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   standalone: false,
@@ -9,4 +10,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'frq-map';
+
+  constructor(private router: Router) {}
+
+  /** True on the /list route, used to extend the breadcrumb with "Links". */
+  get isListPage(): boolean {
+    return this.router.url.startsWith('/list');
+  }
 }

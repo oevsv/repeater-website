@@ -1,0 +1,82 @@
+/* Keep the filter row close to the heading and the table. The themed form has
+   large vertical padding, and UIkit's grid adds a top margin - remove both so the
+   selection boxes don't sit in a big band of white space. */
+.filters {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0;
+
+  > [uk-grid],
+  > .uk-grid {
+    margin-top: 0;
+  }
+}
+
+/* Horizontal scroll for the wide table on narrow screens. */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.repeater-table {
+  min-width: 900px;
+}
+
+/* Never wrap a header label (e.g. "Echolink" was breaking onto two lines). */
+.repeater-table th {
+  white-space: nowrap;
+}
+
+/* Keep the type label (e.g. "Sprechfunk"/"Voice") on a single line. */
+.col-type {
+  white-space: nowrap;
+}
+
+/* Sortable headers. */
+th.sortable {
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Hover tooltip with the extra repeater details, anchored to the call-sign cell. */
+.callsign-cell {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 1000;
+  background: #fff;
+  color: #333;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 0.75rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.callsign-cell:hover .tooltip {
+  display: block;
+}
+
+.tooltip-row {
+  margin-bottom: 0.25rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.tooltip-label {
+  font-weight: 600;
+}

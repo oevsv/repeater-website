@@ -1,0 +1,86 @@
+<div class="uk-section-default uk-section">
+  <div class="uk-container">
+    <h2 i18n="@@listHeading">Repeater list</h2>
+  </div>
+
+  <div class="uk-container uk-container-xlarge">
+    <form class="uk-form filters">
+      <div class="uk-grid-small uk-flex-middle" uk-grid>
+        <div>
+          <input class="uk-input uk-form-width-medium" type="text" name="search"
+                 placeholder="Search…" i18n-placeholder="@@listSearch"
+                 [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()">
+        </div>
+        <div>
+          <select class="uk-select uk-form-width-small" name="type"
+                  [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
+            <option *ngFor="let t of stationTypes" [value]="t">{{ typeLabel(t) }}</option>
+          </select>
+        </div>
+        <div>
+          <select class="uk-select uk-form-width-small" multiple size="3" name="bands"
+                  [(ngModel)]="selectedBands" (ngModelChange)="applyFilters()">
+            <option *ngFor="let b of availableBands" [value]="b">{{ b }}</option>
+          </select>
+        </div>
+        <div>
+          <select class="uk-select uk-form-width-small" multiple size="3" name="modes"
+                  [(ngModel)]="selectedModes" (ngModelChange)="applyFilters()">
+            <option *ngFor="let m of availableModes" [value]="m">{{ m }}</option>
+          </select>
+        </div>
+        <div>
+          <select class="uk-select uk-form-width-small" name="status"
+                  [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
+            <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+        <div>
+          <button type="button" class="uk-button uk-button-primary" (click)="exportToCsv()"
+                  i18n="@@listExport">CSV export</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="table-container">
+      <table class="uk-table uk-table-small uk-table-divider uk-table-hover repeater-table">
+        <thead>
+          <tr>
+            <th class="sortable" (click)="handleSort('callsign')" i18n="@@listCallsign">Call sign</th>
+            <th class="sortable col-type" (click)="handleSort('type_of_station')" i18n="@@listType">Type</th>
+            <th class="sortable" (click)="handleSort('band')" i18n="@@listBand">Band</th>
+            <th class="sortable uk-text-right" (click)="handleSort('frequency_tx')">TX (MHz)</th>
+            <th class="sortable uk-text-right" (click)="handleSort('frequency_rx')">RX (MHz)</th>
+            <th class="sortable uk-text-right" (click)="handleSort('ctcss_tx')">CTCSS TX</th>
+            <th class="sortable uk-text-right" (click)="handleSort('ctcss_rx')">CTCSS RX</th>
+            <th class="sortable" (click)="handleSort('site_name')" i18n="@@listSite">Site</th>
+            <th i18n="@@listModes">Modes</th>
+            <th>Echolink</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filteredRepeaters">
+            <td class="callsign-cell">
+              <a *ngIf="r.url; else plainCall" [href]="r.url" target="_blank" rel="noopener">{{ r.callsign }}</a>
+              <ng-template #plainCall>{{ r.callsign }}</ng-template>
+              <div class="tooltip" *ngIf="r._tooltip.length">
+                <div class="tooltip-row" *ngFor="let item of r._tooltip">
+                  <span class="tooltip-label">{{ item.label }}:</span> {{ item.value }}
+                </div>
+              </div>
+            </td>
+            <td class="col-type">{{ typeLabel(r.type_of_station) }}</td>
+            <td>{{ r.band }}</td>
+            <td class="uk-text-right">{{ r.frequency_tx }}</td>
+            <td class="uk-text-right">{{ r.frequency_rx }}</td>
+            <td class="uk-text-right">{{ r.ctcss_tx }}</td>
+            <td class="uk-text-right">{{ r.ctcss_rx }}</td>
+            <td>{{ r.site_name }}</td>
+            <td>{{ r._modes }}</td>
+            <td>{{ r.echolink_id }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
