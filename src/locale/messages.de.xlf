@@ -101,10 +101,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details1" datatype="html">
-        <source>Klicken Sie auf einen Repeater um weitere Informationen zu erhalten.
-          <p></p>
-          Eine interaktive Tabelle aller Repeater finden Sie
-        </source>
+        <source> Klicken Sie auf einen Repeater um weitere Informationen zu erhalten.<x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/> Eine interaktive Tabelle aller Repeater findet sich </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">54</context>
