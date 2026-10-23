@@ -46,3 +46,6 @@ Thumbs.db
 
 # Angular
 .angular
+
+# Auth prototype — never commit real secrets
+/auth-prototype/.env
