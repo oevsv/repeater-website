@@ -35,14 +35,19 @@
     margin: 0 0 0.75rem;
 
     li {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
+      display: block;
+      text-align: left;
+
+      & + li {
+        margin-top: 0.5rem;
+      }
     }
   }
 
   .auth-label {
+    display: block;
     color: #777;
+    font-size: 0.8em;
   }
 
   .auth-sub {
