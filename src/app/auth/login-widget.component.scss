@@ -1,0 +1,61 @@
+// Top-right login indicator. Kept visually light so it sits in the navbar.
+.auth-widget {
+  display: flex;
+  align-items: center;
+}
+
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.6rem;
+  line-height: 2.4rem;
+  text-transform: none;      // callsigns/labels read better un-uppercased
+  white-space: nowrap;
+}
+
+.auth-icon {
+  display: inline-flex;
+}
+
+.auth-callsign {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.auth-dropdown {
+  min-width: 15rem;
+
+  .auth-name {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-details {
+    margin: 0 0 0.75rem;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+  }
+
+  .auth-label {
+    color: #777;
+  }
+
+  .auth-sub {
+    font-family: ui-monospace, monospace;
+    font-size: 0.8em;
+    word-break: break-all;
+  }
+
+  .auth-verified {
+    color: #137333;
+  }
+
+  .auth-logout {
+    text-transform: none;
+  }
+}

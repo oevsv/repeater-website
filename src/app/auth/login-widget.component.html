@@ -1,0 +1,47 @@
+<!-- Rendered only once /me has answered, to avoid a flicker between states. -->
+<div class="auth-widget" *ngIf="loaded">
+
+  <ng-container *ngIf="loggedIn; else loginLink">
+    <!-- Logged in: human icon + callsign, opens a details dropdown on click. -->
+    <button class="uk-button auth-btn" type="button" aria-haspopup="true">
+      <span class="auth-icon" uk-icon="icon: user"></span>
+      <span class="auth-callsign">{{ me?.callsign }}</span>
+    </button>
+    <div class="auth-dropdown" uk-dropdown="mode: click; pos: bottom-right; offset: 6">
+      <div class="auth-name">{{ me?.name }}</div>
+      <ul class="uk-list auth-details">
+        <li>
+          <span class="auth-label" i18n="@@authCallsign">Callsign</span>
+          <span>{{ me?.callsign }}</span>
+        </li>
+        <li>
+          <span class="auth-label" i18n="@@authEmail">E-mail</span>
+          <span>
+            {{ me?.email }}
+            <span *ngIf="me?.email_verified" class="auth-verified" uk-icon="icon: check"
+                  title="verified" i18n-title="@@authVerified"></span>
+          </span>
+        </li>
+        <li>
+          <span class="auth-label" i18n="@@authSubject">ID</span>
+          <span class="auth-sub">{{ me?.sub }}</span>
+        </li>
+      </ul>
+      <a class="uk-button uk-button-default uk-width-1-1 auth-logout" href="/logout"
+         i18n="@@authLogout">Log out</a>
+    </div>
+  </ng-container>
+
+  <ng-template #loginLink>
+    <!-- Logged out: key icon + "Login", full navigation to the server /login route. -->
+    <a class="uk-button auth-btn" href="/login">
+      <svg class="auth-icon" width="18" height="18" viewBox="0 0 20 20"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path fill="none" stroke="currentColor" stroke-width="1.3"
+              d="M13.5 2.5a4 4 0 1 0 1.9 7.5L18 12.6l-1.4 1.4 1.4 1.4-2.1 2.1-3.8-3.8A4 4 0 0 1 13.5 2.5Zm1 2.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+      </svg>
+      <span i18n="@@authLogin">Login</span>
+    </a>
+  </ng-template>
+
+</div>

@@ -35,6 +35,16 @@ const cfg = {
   // in production so sessions survive restarts; random fallback for dev.
   cookieSecret: env('COOKIE_SECRET', crypto.randomBytes(32).toString('hex')),
   cookieSecure: env('COOKIE_SECURE', 'true') !== 'false',       // Secure flag on cookies
+
+  // --- BFF proxy for /api/secure -> PostgREST ---
+  pgrstUpstream:  env('PGRST_UPSTREAM', 'http://127.0.0.1:3000'),
+  pgrstJwtSecret: env('PGRST_JWT_SECRET'),       // shared with PostgREST's jwt-secret
+  pgrstRole:      env('PGRST_ROLE', 'web_user'), // Postgres role the minted token maps to
+  pgrstTokenTtl:  parseInt(env('PGRST_TOKEN_TTL', '30'), 10), // seconds; mint fresh per request
+  // If set (e.g. "/api/secure"), this prefix is stripped before forwarding, so
+  // /api/secure/whoami -> PostgREST /whoami (PostgREST serves tables at root).
+  // Leave empty to forward the path unchanged.
+  pgrstStripPrefix: env('PGRST_STRIP_PREFIX', ''),
 };
 
 if (!cfg.clientSecret) {
@@ -164,8 +174,94 @@ async function verifyIdToken(idToken, { nonce }) {
 }
 
 // ---------------------------------------------------------------------------
+// Mint a short-lived HS256 JWT for PostgREST, carrying the Postgres role plus
+// the identity claims. PostgREST verifies the HMAC with the shared secret and
+// exposes the claims to SQL via current_setting('request.jwt.claims', true).
+// ---------------------------------------------------------------------------
+function mintPgrstToken(session) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const payload = {
+    role: cfg.pgrstRole,
+    callsign: session.callsign,     // preferred_username
+    name: session.name,
+    email: session.email,
+    sub: session.sub,
+    iat: now,
+    exp: now + cfg.pgrstTokenTtl,
+  };
+  const data = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;
+  const sig = crypto.createHmac('sha256', cfg.pgrstJwtSecret).update(data).digest('base64url');
+  return `${data}.${sig}`;
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Routes.
 // ---------------------------------------------------------------------------
+
+// BFF: /api/secure/* — authenticated passthrough to PostgREST with an injected,
+// signed identity token. Requires a logged-in session (it is "secure").
+async function handleApiSecure(req, res, url) {
+  const json = (status, obj) => {
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(obj));
+  };
+
+  if (!cfg.pgrstJwtSecret) return json(503, { error: 'PGRST_JWT_SECRET not configured on the auth service' });
+
+  const session = unpackCookie(parseCookies(req).oidc_session);
+  if (!session) return json(401, { error: 'authentication required' });
+
+  // Map the path toward PostgREST (optionally stripping the /api/secure prefix).
+  let path = url.pathname;
+  if (cfg.pgrstStripPrefix && path.startsWith(cfg.pgrstStripPrefix)) {
+    path = path.slice(cfg.pgrstStripPrefix.length) || '/';
+  }
+  const upstream = cfg.pgrstUpstream.replace(/\/$/, '') + path + url.search;
+
+  // Forward a safe subset of request headers; strip anything auth/host/cookie
+  // related and inject our minted bearer token.
+  const fwd = new Headers();
+  for (const h of ['content-type', 'accept', 'accept-profile', 'content-profile', 'prefer', 'range', 'range-unit']) {
+    const v = req.headers[h];
+    if (v) fwd.set(h, Array.isArray(v) ? v.join(',') : v);
+  }
+  fwd.set('Authorization', `Bearer ${mintPgrstToken(session)}`);
+
+  const hasBody = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE';
+  const body = hasBody ? await readBody(req) : undefined;
+
+  let upstreamResp;
+  try {
+    upstreamResp = await fetch(upstream, {
+      method: req.method,
+      headers: fwd,
+      body: body && body.length ? body : undefined,
+    });
+  } catch (e) {
+    return json(502, { error: 'PostgREST upstream unreachable', detail: e.message });
+  }
+
+  // Relay status + a safe set of response headers (skip hop-by-hop).
+  const outHeaders = { 'Cache-Control': 'no-store' };
+  for (const [k, v] of upstreamResp.headers) {
+    if (['transfer-encoding', 'connection', 'keep-alive', 'content-encoding', 'content-length'].includes(k)) continue;
+    outHeaders[k] = v;
+  }
+  const buf = Buffer.from(await upstreamResp.arrayBuffer());
+  res.writeHead(upstreamResp.status, outHeaders);
+  res.end(buf);
+}
+
 async function handleLogin(req, res) {
   const state = b64url(crypto.randomBytes(16));
   const nonce = b64url(crypto.randomBytes(16));
@@ -261,6 +357,25 @@ async function handleAuthorized(req, res, query) {
     <details><summary>Full id_token claims</summary><pre>${esc(JSON.stringify(claims, null, 2))}</pre></details>`);
 }
 
+async function handleMe(req, res) {
+  const session = unpackCookie(parseCookies(req).oidc_session);
+  const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
+  if (!session) {
+    res.writeHead(401, headers);
+    return res.end(JSON.stringify({ authenticated: false }));
+  }
+  // Only display-safe claims — never the id_token / any token.
+  res.writeHead(200, headers);
+  res.end(JSON.stringify({
+    authenticated: true,
+    callsign: session.callsign,
+    name: session.name,
+    email: session.email,
+    email_verified: session.email_verified,
+    sub: session.sub,
+  }));
+}
+
 async function handleLogout(req, res) {
   const session = unpackCookie(parseCookies(req).oidc_session);
   setCookie(res, 'oidc_session', '', { clear: true });
@@ -304,10 +419,18 @@ ${body}
 const server = http.createServer(async (req, res) => {
   try {
     const u = new URL(req.url, 'http://localhost');
+
+    // BFF proxy: all HTTP methods (PostgREST needs POST/PATCH/DELETE).
+    if (u.pathname === '/api/secure' || u.pathname.startsWith('/api/secure/')) {
+      return await handleApiSecure(req, res, u);
+    }
+
+    // Everything else is GET-only.
     if (req.method !== 'GET') { res.writeHead(405); return res.end('Method Not Allowed'); }
     switch (u.pathname) {
       case '/login':      return await handleLogin(req, res);
       case '/authorized': return await handleAuthorized(req, res, u.searchParams);
+      case '/me':         return await handleMe(req, res);
       case '/logout':     return await handleLogout(req, res);
       case '/healthz':    res.writeHead(200); return res.end('ok');
       default:            res.writeHead(404); return res.end('Not Found');
@@ -325,4 +448,5 @@ server.listen(cfg.port, '127.0.0.1', () => {
   console.log(`  client_id    ${cfg.clientId}`);
   console.log(`  redirect_uri ${cfg.redirectUri}`);
   console.log(`  cookie Secure=${cfg.cookieSecure}`);
+  console.log(`  /api/secure  -> ${cfg.pgrstUpstream} (role=${cfg.pgrstRole}, jwt-secret ${cfg.pgrstJwtSecret ? 'set' : 'NOT SET'})`);
 });

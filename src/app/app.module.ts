@@ -8,9 +8,10 @@ import { AppComponent } from './app.component';
 import { ShortenUrl } from './shorten-url.pipe';
 import { FrqmapComponent } from './map/frqmap.component';
 import { ListComponent } from './list/list.component';
+import { LoginWidgetComponent } from './auth/login-widget.component';
 
 @NgModule({
-  declarations: [AppComponent, FrqmapComponent, ListComponent, ShortenUrl],
+  declarations: [AppComponent, FrqmapComponent, ListComponent, ShortenUrl, LoginWidgetComponent],
   imports: [BrowserModule, AppRoutingModule, FormsModule],
   // Angular 22 bootstraps zoneless by default; this app mutates state inside
   // RxJS subscribe callbacks, so it needs zone-based change detection to refresh
