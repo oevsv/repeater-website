@@ -46,4 +46,10 @@ export class LoginWidgetComponent implements OnInit {
   get loggedIn(): boolean {
     return !!this.me && this.me.authenticated;
   }
+
+  /** Send the user back to the current page after login. */
+  get loginUrl(): string {
+    const here = window.location.pathname + window.location.search;
+    return '/login?returnTo=' + encodeURIComponent(here);
+  }
 }

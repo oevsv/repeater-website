@@ -262,14 +262,24 @@ async function handleApiSecure(req, res, url) {
   res.end(buf);
 }
 
+// Only allow redirecting back to a local path (no open redirect to other sites).
+function safeReturnTo(raw) {
+  if (!raw || typeof raw !== 'string') return '/';
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) return '/';
+  return raw;
+}
+
 async function handleLogin(req, res) {
+  const inUrl = new URL(req.url, 'http://localhost');
+  const returnTo = safeReturnTo(inUrl.searchParams.get('returnTo'));
+
   const state = b64url(crypto.randomBytes(16));
   const nonce = b64url(crypto.randomBytes(16));
   const verifier = b64url(crypto.randomBytes(32));
   const challenge = b64url(crypto.createHash('sha256').update(verifier).digest());
 
-  // Stash the transient flow data in a short-lived signed cookie.
-  setCookie(res, 'oidc_tx', packCookie({ state, nonce, verifier }), { maxAge: 600 });
+  // Stash the transient flow data (incl. where to return) in a short-lived signed cookie.
+  setCookie(res, 'oidc_tx', packCookie({ state, nonce, verifier, returnTo }), { maxAge: 600 });
 
   const url = new URL(endpoints.auth);
   url.search = new URLSearchParams({
@@ -341,20 +351,10 @@ async function handleAuthorized(req, res, query) {
     id_token: tokens.id_token,
   }), { maxAge: 3600 });
 
-  const row = (k, v) => `<tr><th>${esc(k)}</th><td>${v === undefined ? '<em>(absent)</em>' : esc(String(v))}</td></tr>`;
-  page(res, 200, 'Authorized', `
-    <p class="ok">✓ Signed in successfully.</p>
-    <table>
-      ${row('Callsign (preferred_username)', claims.preferred_username)}
-      ${row('Name', claims.name)}
-      ${row('Given name', claims.given_name)}
-      ${row('Family name', claims.family_name)}
-      ${row('E-mail', claims.email)}
-      ${row('E-mail verified', claims.email_verified)}
-      ${row('Subject (sub)', claims.sub)}
-    </table>
-    <p><a class="btn" href="/logout">Log out</a></p>
-    <details><summary>Full id_token claims</summary><pre>${esc(JSON.stringify(claims, null, 2))}</pre></details>`);
+  // Success: go back into the SPA (where the login widget shows the identity),
+  // not to a server-rendered page.
+  res.writeHead(302, { Location: safeReturnTo(tx.returnTo), 'Cache-Control': 'no-store' });
+  res.end();
 }
 
 async function handleMe(req, res) {
