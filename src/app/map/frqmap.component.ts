@@ -236,23 +236,38 @@ export class FrqmapComponent implements OnInit {
       observe: 'body',
       responseType: 'text'
     })
-      .subscribe((text) => {
-        const result = parser.read(text);
-        const options = optionsFromCapabilities(result, {
-          layer: 'bmaphidpi',
-          matrixSet: 'google3857'
-        })!
-        options.attributions = 'Grundkarte &copy; <a href="//www.basemap.at/">' +
-          'basemap.at</a>, Repeaterdaten CC-BY4.0.'
+      .subscribe({
+        next: (text) => {
+          try {
+            const result = parser.read(text);
+            const options = optionsFromCapabilities(result, {
+              layer: 'bmaphidpi',
+              matrixSet: 'google3857'
+            });
+            // optionsFromCapabilities returns null if the layer/matrixSet is not
+            // found (e.g. the request returned HTML, not the capabilities XML).
+            if (!options) {
+              throw new Error('optionsFromCapabilities returned null (capabilities not parsed as expected)');
+            }
+            options.attributions = 'Grundkarte &copy; <a href="//www.basemap.at/">' +
+              'basemap.at</a>, Repeaterdaten CC-BY4.0.'
 
-        const layer = new TileLayer({
-          source: new WMTSSource(options!),
-          opacity: 1,
-          visible: true
-        })
-        this.desaturate(layer);
-        this.map.getLayers().insertAt(0, layer)
-        //this.map.addLayer(layer);
+            const layer = new TileLayer({
+              source: new WMTSSource(options),
+              opacity: 1,
+              visible: true
+            })
+            this.desaturate(layer);
+            this.map.getLayers().insertAt(0, layer)
+          } catch (err) {
+            console.error('basemap: failed to build WMTS layer from capabilities, falling back to OSM', err);
+            this.addFallbackBasemap();
+          }
+        },
+        error: (err) => {
+          console.error('basemap: failed to load WMTS capabilities, falling back to OSM', err);
+          this.addFallbackBasemap();
+        }
       });
 
     // change mouse cursor when over marker
@@ -338,6 +353,24 @@ export class FrqmapComponent implements OnInit {
         view.setResolution(resolution / DESKTOP_INITIAL_ZOOM_FACTOR);
       }
     }
+  }
+
+  /** Fallback basemap (desaturated OSM) used when the basemap.at WMTS cannot be
+   *  loaded, so the map never renders without a background layer. */
+  private addFallbackBasemap(): void {
+    // Guard against adding it twice (e.g. error + a retry).
+    if (this.map.getLayers().getLength() > 0 &&
+        (this.map.getLayers().item(0) as TileLayer<TileSource>)?.get('isBasemap')) {
+      return;
+    }
+    const layer = new TileLayer({
+      source: new OSM(),
+      opacity: 1,
+      visible: true
+    });
+    layer.set('isBasemap', true);
+    this.desaturate(layer);
+    this.map.getLayers().insertAt(0, layer);
   }
 
   /** Renders a layer in grey tones only (the basemap.at tiles are coloured); the
