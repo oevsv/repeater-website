@@ -1,123 +1,461 @@
-#map {
-  /* Match the map's shape to the Austria extent so the overview fills the canvas
-     with no empty band above/below. This also means the zoom/locate controls
-     (pinned to the top-left) sit on top of the map instead of in empty space. */
-  width: 100%;
-  aspect-ratio: 1139218 / 623726;
+/* Full-screen map with floating widgets. The map owns the whole viewport; the
+   top bar, details panel, drawer and hint float above it. Breakpoint 960px
+   matches DESKTOP_BREAKPOINT in frqmap.component.ts. OpenLayers' own controls are
+   created outside this component's view, so they are styled in styles.scss. */
+
+$gap: 8px;
+$radius: 10px;
+$shadow: 0 1px 4px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.08);
+$card-bg: #fff;
+$muted: #666;
+$accent: #008CEA; // $oevsv-blue
+$desktop: 960px;
+$details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
+
+.map-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  // Safe areas on notched phones (viewport-fit=cover is set in index.html).
+  --top: max(#{$gap}, env(safe-area-inset-top));
+  --left: max(#{$gap}, env(safe-area-inset-left));
+  --right: max(#{$gap}, env(safe-area-inset-right));
+  --bottom: max(#{$gap}, env(safe-area-inset-bottom));
+  // Bottom of the OL control stack (styled in styles.scss).
+  --ctrl-bottom: calc(var(--bottom) + 28px);
 }
 
-/* Trim the large default section/heading whitespace so the map sits higher on
-   the screen, especially on mobile. */
-.uk-section {
-  padding-top: 24px;
-  padding-bottom: 16px;
-}
-
-/* The heading is the only child of its .uk-container, so UIkit's
-   `.uk-container > :last-child { margin-bottom: 0 }` zeroes a plain `h2` rule.
-   The descendant selector outranks it to re-add a small gap below the heading. */
-.uk-container h2 {
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-@media (max-width: 959px) {
-  .uk-section {
-    padding-top: 16px;
-    padding-bottom: 10px;
+@media (max-width: #{$desktop - 1px}) {
+  // Bottom sheet open: controls would sit under it; when collapsed, ride above it.
+  .map-page.has-details {
+    --ctrl-bottom: calc(60% + 8px);
   }
 
-  .uk-container h2 {
-    margin-bottom: 6px;
+  .map-page.has-details.details-collapsed {
+    --ctrl-bottom: calc(env(safe-area-inset-bottom) + 64px);
   }
 }
 
-/* Animate the right column as it grows (1/5 -> 1/3) when a site is selected.
-   The width itself is set by the toggled uk-width-*@l classes. */
-.right-panel {
-  position: relative;
-  transition: width 0.4s ease;
-}
-
-.right-panel.details-active {
-  /* Reserve space at the top-right so content never runs under the X button. */
-  padding-right: 1.75rem;
-}
-
-.details-close {
+.map-canvas {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  z-index: 1;
-  display: flex;
+  inset: 0;
+  // Same near-white as the basemap.at tiles, so the end of their coverage
+  // (just outside Austria) doesn't show up as a frame.
+  background: #fdfdfd;
+}
+
+/* --- shared bits ------------------------------------------------------- */
+
+.mbar-card {
+  box-sizing: border-box;
+  background: $card-bg;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  pointer-events: auto;
+}
+
+.mbtn {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  flex: none;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 8px;
   background: transparent;
-  color: #666;
-  line-height: 0;
+  color: #333;
   cursor: pointer;
 
-  &:hover {
+  &:hover,
+  &.active {
     background: rgba(0, 0, 0, 0.06);
-    color: #000;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: -2px;
   }
 }
 
-/* Mobile (below UIkit's @m breakpoint): instead of stacking the info below the
-   map (off-screen), the details panel overlays the map, leaving a ~1/10 sliver
-   of map on the left. The X button (.details-close) returns to the map. */
-@media (max-width: 959px) {
-  .right-panel.details-active {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 90%;
-    z-index: 1000;
-    overflow-y: auto;
-    padding: 1rem;
-    background: #fff;
-    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.25);
+.mbtn-small {
+  width: 28px;
+  height: 28px;
+}
 
-    .details-close {
-      top: 0.5rem;
-      right: 0.5rem;
-      width: 2.25rem;
-      height: 2.25rem;
+.mbtn-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $accent;
+  box-shadow: 0 0 0 2px $card-bg;
+}
 
-      svg {
-        width: 24px;
-        height: 24px;
-      }
+/* --- top bar ----------------------------------------------------------- */
+
+.mbar {
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  right: var(--right);
+  z-index: 35; // above the details panel, so the login dropdown isn't covered
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: $gap;
+  pointer-events: none; // only the cards themselves catch clicks
+}
+
+.mbar-search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0; // shrink before the login card wraps to a second row
+  min-width: 0;
+  max-width: 440px;
+  height: 48px;
+  padding: 0 4px;
+}
+
+.mbar-logo {
+  display: none;
+  height: 30px;
+  margin: 0 4px 0 2px;
+}
+
+.mbar-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px; // >= 16px keeps iOS from zooming into the field
+  color: #222;
+  outline: none;
+
+  &::placeholder {
+    color: #888;
+  }
+}
+
+.mbar-user {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  flex: none;
+  margin-left: auto;
+  padding: 0 4px;
+}
+
+.mfilters {
+  // Full row below the search card.
+  flex: 1 0 100%;
+  max-width: 440px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+
+  label {
+    color: $muted;
+    white-space: nowrap;
+  }
+
+  .uk-select,
+  .uk-input {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    font-size: 16px;
+  }
+}
+
+.mfilters-reset {
+  grid-column: 1 / -1;
+  justify-self: start;
+  text-transform: none;
+}
+
+/* --- hint -------------------------------------------------------------- */
+
+.mhint {
+  // Centred in the space left of the control column at the right.
+  position: absolute;
+  left: var(--left);
+  right: calc(var(--right) + 48px);
+  bottom: calc(var(--bottom) + 28px); // above the attribution
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  max-width: calc(100% - var(--left) - var(--right) - 48px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 4px 4px 4px 14px;
+  border-radius: 20px;
+  background: rgba(30, 30, 30, 0.85);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+
+  .mbtn {
+    color: #fff;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
     }
   }
 }
 
-.alignToStart {
-  align-self: flex-start;
+/* --- details: bottom sheet (mobile) / right card (desktop) --------------- */
+
+.mdetails {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  max-height: 60%;
+  background: $card-bg;
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.2);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: mdetails-up 0.2s ease-out;
 }
-.alignToEnd {
-  align-self: flex-end;
-  width: 100%;
+
+@keyframes mdetails-up {
+  from { transform: translateY(30%); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
-.fullHeight {
-  height: 100%;
+
+.mdetails-head {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: 4px 4px 4px 0;
+  border-bottom: 1px solid #eee;
 }
+
+.mdetails-grip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 8px;
+  padding: 14px 8px 6px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mdetails-handle {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: #ccc;
+}
+
+.mdetails-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdetails-chevron {
+  flex: none;
+  color: $muted;
+  transition: transform 0.2s;
+}
+
+// Chevron shows where the panel goes: the mobile sheet collapses downwards.
+.details-collapsed .mdetails-chevron {
+  transform: rotate(180deg);
+}
+
+.details-collapsed .mdetails-head {
+  border-bottom: none;
+}
+
+.mdetails-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 16px 16px;
+
+  h4 {
+    margin-top: 16px;
+  }
+}
+
+@media (min-width: $desktop) {
+  .mdetails {
+    top: calc(var(--top) + 56px);
+    right: var(--right);
+    left: auto;
+    bottom: auto;
+    width: $details-width;
+    // Leaves the bottom-right free for the zoom / locate controls.
+    max-height: calc(100% - var(--top) - 56px - var(--ctrl-bottom) - 140px);
+    border-radius: $radius;
+    box-shadow: $shadow;
+    padding-bottom: 0;
+    animation-name: mdetails-in;
+  }
+
+  @keyframes mdetails-in {
+    from { transform: translateX(16px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  .mdetails-handle {
+    display: none;
+  }
+
+  // ...while the desktop card collapses upwards.
+  .mdetails-chevron {
+    transform: rotate(180deg);
+  }
+
+  .details-collapsed .mdetails-chevron {
+    transform: none;
+  }
+
+  .mdetails-grip {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+/* --- drawer ------------------------------------------------------------ */
+
+.mscrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.3);
+  animation: mfade 0.2s;
+}
+
+@keyframes mfade {
+  from { opacity: 0; }
+}
+
+.mdrawer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, 88%);
+  padding: var(--top) 16px var(--bottom) max(16px, env(safe-area-inset-left));
+  overflow-y: auto;
+  background: $card-bg;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.25);
+  transform: translateX(-105%);
+  visibility: hidden;
+  transition: transform 0.25s ease, visibility 0s 0.25s;
+
+  &.open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.25s ease;
+  }
+}
+
+.mdrawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mdrawer-logo {
+  height: 40px;
+}
+
+.mdrawer-title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.mdrawer-intro {
+  color: #333;
+}
+
+.mdrawer-links {
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0;
+  border-top: 1px solid #eee;
+
+  a {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+.mdrawer-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 0.9em;
+}
+
+.mdrawer-lang {
+  display: inline-flex;
+  gap: 4px;
+
+  a {
+    padding: 2px 8px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+
+    &.current {
+      border-color: $accent;
+      background: $accent;
+      color: #fff !important;
+    }
+  }
+}
+
+/* --- wider screens: logo in the search card ------------------------------ */
+
+@media (min-width: 640px) {
+  .mbar-logo {
+    display: block;
+  }
+}
+
+/* --- details content (unchanged tables) --------------------------------- */
+
 .valueColumn {
   word-break: keep-all;
-}
-
-.legendContainer {
-  max-width: 400px;
-}
-
-.legendGradient {
-  width: 100%;
-  height: 20px;
-  background-image: linear-gradient(90deg, #d7191c,#e85b3a,#f99e59,#fec980,#ffedaa,#edf8b9,#c7e9ad,#9dd3a7,#64abb0,#4daf4a);
 }

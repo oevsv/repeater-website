@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, Inject, LOCALE_ID, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import sampleResponseToReq1, {
   Filter,
@@ -41,10 +41,17 @@ const parser = new WMTSCapabilities();
 
 /** Austria-wide extent (EPSG:3857) used as the initial view. */
 const AUSTRIA_EXTENT: Extent = [908071, 5751733, 2047289, 6375459];
-/** Min viewport width (UIkit `@m`) treated as desktop. */
+/** Min viewport width (UIkit `@m`) treated as desktop: details float as a card on
+ *  the right. Below it they are a bottom sheet. Keep in sync with the SCSS. */
 const DESKTOP_BREAKPOINT = 960;
-/** On desktop the initial view starts 20% more zoomed in than the full-country fit. */
-const DESKTOP_INITIAL_ZOOM_FACTOR = 1.2;
+/** Width of the desktop details card incl. its margin (px), see .mdetails. */
+const DETAILS_CARD_WIDTH = 420;
+/** Height of the floating top bar incl. margin (px), kept clear when fitting. */
+const TOP_BAR_HEIGHT = 64;
+/** Portrait screens: share of the height (below the top bar) Austria fills initially. */
+const PORTRAIT_FILL = 0.6;
+/** localStorage key remembering that the "tap a repeater" hint was dismissed. */
+const HINT_DISMISSED_KEY = 'frqmap.hintDismissed';
 
 /** Teardrop pin marking a clicked / located point. A pin shape keeps it distinct
  *  from the round repeater dots (which turn green/red on selection). */
@@ -188,6 +195,14 @@ export class FrqmapComponent implements OnInit {
   filterFrequency: String;
   filterName: String;
 
+  // Floating UI state (see frqmap.component.html).
+  drawerOpen = false;
+  filtersOpen = false;
+  detailsCollapsed = false;
+  showHint = !readHintDismissed();
+  /** Repeater type selected by default (from /settings), to detect active filters. */
+  private defaultType: String | null = null;
+
   // Single marker for the clicked / located point (red pin for map clicks,
   // blue pin for the locate button). Distinct from the round repeater dots.
   private readonly clickMarkerSource: VectorSource<any> = new VectorSource();
@@ -199,8 +214,45 @@ export class FrqmapComponent implements OnInit {
 
   constructor(
     private http : HttpClient,
-    private statusService : RepeaterStatusService
+    private statusService : RepeaterStatusService,
+    @Inject(LOCALE_ID) public locale: string
   ) { }
+
+  get hasDetails(): boolean {
+    return !!this.selectedSite || !!this.pointInfo;
+  }
+
+  get filtersActive(): boolean {
+    return (this.defaultType !== null && this.selectedType !== this.defaultType) || !!this.filterFrequency;
+  }
+
+  resetFilters(): void {
+    if (this.defaultType !== null) {
+      this.selectedType = this.defaultType;
+    }
+    this.filterFrequency = '';
+    this.loadSites();
+  }
+
+  dismissHint(): void {
+    this.showHint = false;
+    try {
+      localStorage.setItem(HINT_DISMISSED_KEY, '1');
+    } catch {
+      // storage unavailable (private mode etc.) - the hint just comes back next time
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.drawerOpen) {
+      this.drawerOpen = false;
+    } else if (this.filtersOpen) {
+      this.filtersOpen = false;
+    } else if (this.hasDetails) {
+      this.closeDetails();
+    }
+  }
 
   ngOnInit(): void {
     console.log("init")
@@ -316,7 +368,7 @@ export class FrqmapComponent implements OnInit {
           this.clearLocationMarker();
           this.loadInformationForSite(siteName)
           this.changeOverlaySource(siteUrl)
-          this.scheduleMapResize()
+          this.onDetailsOpened(e.coordinate)
         }
       } else {
         // Case B: clicked a non-repeater location (including an existing red/blue
@@ -326,33 +378,86 @@ export class FrqmapComponent implements OnInit {
         this.showLocationMarker(e.coordinate, CLICK_MARKER_STYLE);
         this.loadInformationForPoint(coordsWgs84);
         this.removeOverlaySource();
-        this.scheduleMapResize();
+        this.onDetailsOpened(e.coordinate);
       }
     })
 
-    // The container is often still laying out right after creation, so the first
-    // fit used a stale size; re-fit once it has its real size so Austria fills the
-    // map instead of sitting in a band of empty space.
-    let timeouts = [100, 300, 1000, 3000]
-    timeouts.forEach(to => {
-      setTimeout(() => {
-        this.map.updateSize();
-        this.fitAustria();
-      }, to);
-    })
+    // The map fills the (fixed) viewport, so its size is known almost at once;
+    // re-fit once after the first layout in case the target was created at 0x0.
+    setTimeout(() => {
+      this.map.updateSize();
+      this.fitAustria();
+    }, 100);
   }
 
-  /** Fits the Austria-wide extent to the current map size. On desktop the view
-   *  then zooms in 20% so it starts a bit closer than the full-country overview. */
+  /** Fits Austria into the viewport, keeping it clear of the floating top bar.
+   *  On portrait screens a full fit leaves Austria as a thin strip, so zoom in
+   *  until it fills PORTRAIT_FILL of the height, accepting that the west and
+   *  east get cut off. */
   private fitAustria(): void {
     const view = this.map.getView();
-    view.fit(AUSTRIA_EXTENT, { size: this.map.getSize() });
-    if (window.innerWidth >= DESKTOP_BREAKPOINT) {
-      const resolution = view.getResolution();
-      if (resolution) {
-        view.setResolution(resolution / DESKTOP_INITIAL_ZOOM_FACTOR);
-      }
+    const size = this.map.getSize();
+    view.fit(AUSTRIA_EXTENT, { size, padding: [TOP_BAR_HEIGHT, 8, 8, 8] });
+    if (!size || size[1] <= size[0]) {
+      return;
     }
+    const austriaHeight = AUSTRIA_EXTENT[3] - AUSTRIA_EXTENT[1];
+    const portraitResolution = austriaHeight / ((size[1] - TOP_BAR_HEIGHT) * PORTRAIT_FILL);
+    const resolution = view.getResolution();
+    if (resolution && portraitResolution < resolution) {
+      view.setResolution(portraitResolution);
+    }
+  }
+
+  /** A repeater or location was clicked: show the details expanded, retire the
+   *  hint and make sure the clicked point is not hidden under the panel. */
+  private onDetailsOpened(coordinate: Coordinate): void {
+    this.detailsCollapsed = false;
+    this.filtersOpen = false;
+    if (this.showHint) {
+      this.dismissHint();
+    }
+    this.revealCoordinate(coordinate);
+  }
+
+  /** Pans the map just enough that `coordinate` sits in the part of the screen not
+   *  covered by the details panel (right card on desktop, bottom sheet on mobile). */
+  private revealCoordinate(coordinate: Coordinate): void {
+    const size = this.map.getSize();
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    if (!size || !pixel) {
+      return;
+    }
+    const [width, height] = size;
+    let target: number[];
+    if (width >= DESKTOP_BREAKPOINT) {
+      const freeWidth = width - DETAILS_CARD_WIDTH;
+      if (pixel[0] <= freeWidth - 40) {
+        return;
+      }
+      target = [freeWidth / 2, pixel[1]];
+    } else {
+      // The sheet covers up to ~60% of the height; aim for the middle of the rest.
+      const freeHeight = height * 0.4;
+      if (pixel[1] >= TOP_BAR_HEIGHT && pixel[1] <= freeHeight) {
+        return;
+      }
+      target = [pixel[0], TOP_BAR_HEIGHT + (freeHeight - TOP_BAR_HEIGHT) / 2];
+    }
+    const view = this.map.getView();
+    const center = view.getCenter();
+    const resolution = view.getResolution();
+    if (!center || !resolution) {
+      return;
+    }
+    // Map y grows northwards while pixel y grows downwards.
+    view.animate({
+      center: [
+        center[0] + (pixel[0] - target[0]) * resolution,
+        center[1] - (pixel[1] - target[1]) * resolution,
+      ],
+      duration: 300,
+    });
   }
 
   /** Fallback basemap (desaturated OSM) used when the basemap.at WMTS cannot be
@@ -412,6 +517,7 @@ export class FrqmapComponent implements OnInit {
         }
         if (defaultType) {
           this.selectedType = defaultType.type;
+          this.defaultType = defaultType.type;
           console.log("Selected type set to ", this.selectedType);
         }
           //synchronize selectedTypeLabel
@@ -744,9 +850,8 @@ export class FrqmapComponent implements OnInit {
 
 
 
-  /** Closes the info panel: the right column animates back to 1/5 with the intro
-   *  text, the selected site marker reverts to its normal colour, and its tile
-   *  overlay is removed. */
+  /** Closes the details panel: the selected site marker reverts to its normal
+   *  colour and its tile overlay is removed. */
   closeDetails(): void {
     if (this.selectedFeature) {
       this.deselectRepeater(this.selectedFeature);
@@ -755,14 +860,6 @@ export class FrqmapComponent implements OnInit {
     this.trxInfo = null;
     this.pointInfo = null;
     this.removeOverlaySource();
-    this.scheduleMapResize();
-  }
-
-  /** Keeps the OpenLayers canvas in sync with the panel's width animation. */
-  private scheduleMapResize(): void {
-    for (const delay of [0, 100, 200, 300, 400, 500]) {
-      setTimeout(() => this.map.updateSize(), delay);
-    }
   }
 
   /** Drops/replaces the single location pin at the given coordinate (EPSG:3857)
@@ -847,7 +944,7 @@ export class FrqmapComponent implements OnInit {
     this.removeOverlaySource();
     this.showLocationMarker(coordinate, LOCATE_MARKER_STYLE);
     this.loadInformationForPoint(lonLat);
-    this.scheduleMapResize();
+    this.detailsCollapsed = false;
   }
 
   convertDMS(dd: number): string {
@@ -861,6 +958,14 @@ export class FrqmapComponent implements OnInit {
 
 
 
+}
+
+function readHintDismissed(): boolean {
+  try {
+    return localStorage.getItem(HINT_DISMISSED_KEY) === '1';
+  } catch {
+    return false;
+  }
 }
 
 /** "Locate me" crosshair, inlined so the control is self-contained. Uses

@@ -13,7 +13,7 @@ export class AppComponent {
 
   constructor(private router: Router) {}
 
-  /** True on the /list route, used to extend the breadcrumb with "Links". */
+  /** True on the /list route; only that page shows the slim header/footer (the map is full screen). */
   get isListPage(): boolean {
     return this.router.url.startsWith('/list');
   }

@@ -1,0 +1,49 @@
+// Slim chrome for non-map pages (the map page is full screen, see frqmap).
+.page-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.page-brand img {
+  display: block;
+  height: 34px;
+}
+
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #333;
+}
+
+.page-user {
+  margin-left: auto;
+}
+
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 16px max(16px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-bottom));
+  border-top: 1px solid #eee;
+  font-size: 0.9em;
+}
+
+.page-lang {
+  margin-left: auto;
+}
+
+@media (max-width: 479px) {
+  // Phones: the back link alone says enough, drop the logo.
+  .page-brand {
+    display: none;
+  }
+}

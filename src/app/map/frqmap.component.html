@@ -1,400 +1,461 @@
-<div class="uk-section-default uk-section">
-  <div class="uk-container">
-    <h2 i18n="@@cardMobile">Austrian Amateur radio repeaters</h2>
+<!-- Full-screen map. Everything else floats on top of it as small, collapsible
+     widgets, so the whole viewport stays pannable / pinch-zoomable. -->
+<div class="map-page" [class.has-details]="hasDetails" [class.details-collapsed]="detailsCollapsed">
+
+  <div id="map" class="map-canvas"></div>
+
+  <!-- Top bar: menu + search/filter on the left, login on the right. -->
+  <div class="mbar">
+    <div class="mbar-card mbar-search">
+      <button type="button" class="mbtn" (click)="drawerOpen = true"
+              title="Menu" i18n-title="@@mapMenu" aria-label="Menu" i18n-aria-label="@@mapMenu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true" focusable="false">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <img class="mbar-logo" src="assets/oevsv_banner_white.svg" alt="ÖVSV">
+      <input type="search" class="mbar-input" name="name_filter" autocomplete="off"
+             placeholder="Name or call sign" i18n-placeholder="@@searchPlaceholder"
+             aria-label="Name or call sign" i18n-aria-label="@@searchPlaceholder"
+             [(ngModel)]="filterName" (ngModelChange)="loadSites()">
+      <button type="button" class="mbtn" [class.active]="filtersOpen" (click)="filtersOpen = !filtersOpen"
+              title="Filters" i18n-title="@@mapFilters" aria-label="Filters" i18n-aria-label="@@mapFilters">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/>
+        </svg>
+        <span *ngIf="filtersActive" class="mbtn-dot"></span>
+      </button>
+    </div>
+
+    <div class="mbar-card mbar-user">
+      <app-login-widget></app-login-widget>
+    </div>
+
+    <!-- Filter panel, folds out below the search card. -->
+    <form *ngIf="filtersOpen" class="mbar-card mfilters" (submit)="$event.preventDefault()">
+      <label for="statistik_type" i18n="@@operator">Repeater type: </label>
+      <select *ngIf="formOptions" class="uk-select" id="statistik_type" name="statistik_type"
+              [(ngModel)]="selectedType" (ngModelChange)="loadSites()">
+        <option *ngFor="let repeaterTypes of formOptions.filter.types" [value]="repeaterTypes.type">
+          <ng-container *ngIf="repeaterTypes.label === '@all'" i18n="@@allTypes">All repeater</ng-container>
+          <ng-container *ngIf="repeaterTypes.label !== '@all'">
+            {{repeaterTypes.label}}
+          </ng-container>
+        </option>
+      </select>
+      <label for="frequency_filter" i18n="@@frequency">Frequency: </label>
+      <input type="text" inputmode="decimal" class="uk-input" id="frequency_filter" name="frequency_filter"
+             [(ngModel)]="filterFrequency" (ngModelChange)="loadSites()">
+      <button *ngIf="filtersActive" type="button" class="uk-button uk-button-default uk-button-small mfilters-reset"
+              (click)="resetFilters()" i18n="@@resetFilters">Reset filters</button>
+    </form>
   </div>
 
+  <!-- One-line hint until the user has interacted; replaces the old intro column. -->
+  <div *ngIf="showHint && !hasDetails" class="mhint">
+    <span i18n="@@mapHint">Tap a repeater for details</span>
+    <button type="button" class="mbtn mbtn-small" (click)="dismissHint()"
+            title="Close" i18n-title="@@close" aria-label="Close" i18n-aria-label="@@close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" aria-hidden="true" focusable="false">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
 
-  <div class="uk-container uk-container-xlarge">
-    <div class="uk-container">
-      <form class="uk-form uk-padding-remove">
-        <p>
-          <label for="statistik_type" class="uk-margin-small-right" i18n="@@operator">Repeater type: </label>
-          <select *ngIf="formOptions" class="uk-select uk-width-auto" id="statistik_type" name="statistik_type"
-                  [(ngModel)]="selectedType" (ngModelChange)="loadSites()">
-            <option *ngFor="let repeaterTypes of formOptions.filter.types" [value]="repeaterTypes.type">
-              <ng-container *ngIf="repeaterTypes.label === '@all'" i18n="@@allTypes">All repeater</ng-container>
-              <ng-container *ngIf="repeaterTypes.label !== '@all'">
-                {{repeaterTypes.label}}
-              </ng-container>
-            </option>
-          </select>
-          <label for="frequency_filter" class="uk-margin-small-right uk-margin-small-left" i18n="@@frequency">Frequency: </label>
-          <input type="text" class="uk-input uk-width-auto" id="frequency_filter" name="frequency_filter"
-                 [(ngModel)]="filterFrequency" (ngModelChange)="loadSites()">
-          <label for="name_filter" class="uk-margin-small-right uk-margin-small-left" i18n="@@name">Name or call sign: </label>
-          <input type="text" class="uk-input uk-width-auto" id="name_filter" name="name_filter"
-                [(ngModel)]="filterName" (ngModelChange)="loadSites()">
-        </p>
-
-      </form>
-    </div>
-    <div uk-grid>
-      <div class="uk-width-expand@m">
-        <div class="map-container" id="map">
-        </div>
-
-
-
-      </div>
-      <div class="right-panel" [ngClass]="(selectedSite || pointInfo) ? 'uk-width-1-3@l details-active' : 'uk-width-1-5@l'">
-        <button *ngIf="selectedSite || pointInfo" type="button" class="details-close" (click)="closeDetails()"
-                title="Close" i18n-title="@@close" aria-label="Close" i18n-aria-label="@@close">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               aria-hidden="true" focusable="false">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-        <div>
-          <div class="alignToStart uk-width-expand">
-            <div *ngIf="selectedSite == null && !pointInfo">
-              <h3 i18n="@@introtext">Welcome to the repeater page of the ÖVSV</h3><p>
-              <ng-container i18n="@@introtext_details1">
-              Click on a repeater for further details.<p></p>
-              An interactive table of all repeaters can be found </ng-container>
-              <a routerLink="/list"><ng-container i18n="@@introtext_details1a"> here</ng-container></a>.
-              <p></p>
-              <ng-container i18n="@@introtext_details2">
-              Further information including downloadable repeater information, code plugs and Open Data can be found </ng-container>
-              <a href="https://www.oevsv.at/funkbetrieb/ukw-referat/maps/">
-                <ng-container i18n="@@introtext_details3">here</ng-container></a><ng-container i18n="@@introtext_details4">.</ng-container>
-              <div>
-              <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to</ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>.
-                </div>
-              <br>
-            </div>
-            <div *ngIf="selectedSite">
-              <h3 i18n="@@trx_information">Site {{ selectedSite.site_name }} {{selectedSite.locator_short}}</h3>
+  <!-- Details: floating card on the right (desktop) / bottom sheet (mobile). -->
+  <section *ngIf="hasDetails" class="mdetails" aria-live="polite">
+    <header class="mdetails-head">
+      <button type="button" class="mdetails-grip" (click)="detailsCollapsed = !detailsCollapsed"
+              [attr.aria-expanded]="!detailsCollapsed"
+              title="Collapse / expand" i18n-title="@@mapToggleDetails">
+        <span class="mdetails-handle" aria-hidden="true"></span>
+        <h3 *ngIf="selectedSite" class="mdetails-title" i18n="@@trx_information">Site {{ selectedSite.site_name }} {{selectedSite.locator_short}}</h3>
+        <h3 *ngIf="pointInfo && !selectedSite" class="mdetails-title" i18n="@@nearby"> Nearby sites
+        </h3>
+        <svg class="mdetails-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <button type="button" class="mbtn" (click)="closeDetails()"
+              title="Close" i18n-title="@@close" aria-label="Close" i18n-aria-label="@@close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true" focusable="false">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+    <div class="mdetails-body" [hidden]="detailsCollapsed">
+      <ng-container *ngIf="selectedSite">
 
 
-              <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
-                <thead>
-                <tr>
-                  <th class="uk-text-left" i18n="@@parmeter">Parameter</th>
-                  <th class="uk-text-right" i18n="@@value">Value</th>
+        <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
+          <thead>
+          <tr>
+            <th class="uk-text-left" i18n="@@parmeter">Parameter</th>
+            <th class="uk-text-right" i18n="@@value">Value</th>
 
-                </tr>
-                </thead>
-                <tbody>
+          </tr>
+          </thead>
+          <tbody>
 
-                <tr>
-                  <td>
-                    <ng-container i18n="@@supports">Site supports</ng-container>
-                  </td>
-                  <td class="uk-text-right valueColumn">
-                    <div *ngIf="selectedSite.fm==true" >
-                      <ng-container i18n="@@fm">FM</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.dmr==true" >
-                      <ng-container i18n="@@dmr">DMR</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.c4fm==true" >
-                      <ng-container i18n="@@c4fm">C4fm</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.dstar==true" >
-                      <ng-container i18n="@@dstar">Dstar</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.tetra==true" >
-                      <ng-container i18n="@@tetra">Tetra</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.beacon==true" >
-                      <ng-container i18n="@@beacon">Beacon</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.atv==true" >
-                      <ng-container i18n="@@atv">ATV</ng-container>
-                    </div>
-                    <div *ngIf="selectedSite.digipeater==true" >
-                      <ng-container i18n="@@digipeater">Digipeater</ng-container>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="selectedSite.city">
-                  <td>
-                    <ng-container i18n="@@city">Next city</ng-container>
-                  </td>
-                  <td class="uk-text-right valueColumn">{{(selectedSite.city) }}
-
-                  </td>
-                </tr>
-                <tr *ngIf="selectedSite.latitude_formated">
-                  <td>
-                    <ng-container i18n="@@latitude">Latitude</ng-container>
-                  </td>
-                  <td class="uk-text-right valueColumn">{{(selectedSite.latitude_formated) }}
-
-                  </td>
-                </tr>
-                <tr *ngIf="selectedSite.longitude_formated">
-                  <td>
-                    <ng-container i18n="@@longitude">Longitude</ng-container>
-                  </td>
-                  <td class="uk-text-right valueColumn">{{(selectedSite.longitude_formated) }}
-
-                  </td>
-                </tr>
-                <tr *ngIf="selectedSite.locator_long">
-                  <td>
-                    <ng-container i18n="@@locator">Locator</ng-container>
-                  </td>
-                  <td class="uk-text-right valueColumn">{{selectedSite.locator_long}}
-
-
-                  </td>
-                </tr>
-                <tr *ngIf="selectedSite.sea_level">
-                  <td>
-                    <ng-container i18n="@@sea_level">Sea level</ng-container>
-                  </td>
-                  <td class="uk-text-right valueColumn">{{(selectedSite.sea_level) }}&nbsp;<ng-container i18n="@@meter1">
-                    m
-                  </ng-container>
-                  </td>
-                </tbody>
-              </table>
-
-            </div>
-          </div>
-          <div *ngIf="selectedSite">
-            <div *ngIf="trxInfo" class="uk-flex uk-flex-column fullHeight">
-              <div class="alignToStart uk-width-expand">
-                <div *ngIf="selectedSite">
-                  <h4><ng-container i18n="@@radios">Details</ng-container> </h4>
-                </div>
-                <p>
-
-                </p>
-                <div *ngFor="let info of trxInfo">
-                  <h4 class="uk-margin-top-50 uk-margin-remove-bottom"> {{info.callsign}} {{info.frequency_tx |number: '1.3-4'}} MHz</h4>
-                  <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
-                    <thead>
-                    <tr>
-                      <th class="uk-text-left" i18n="@@parmeter">Parameter</th>
-                      <th class="uk-text-right" i18n="@@value">Value</th>
-
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                      <td>
-                        <ng-container i18n="@@trxsupports">Radio mode</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">
-                        <div *ngIf="info.fm==true" >
-                          <ng-container i18n="@@fm">FM</ng-container>
-                        </div>
-                        <div *ngIf="info.dmr==true" >
-                          <ng-container i18n="@@dmr">DMR</ng-container>
-                        </div>
-                        <div *ngIf="info.c4fm==true" >
-                          <ng-container i18n="@@c4fm">C4fm</ng-container>
-                        </div>
-                        <div *ngIf="info.dstar==true" >
-                          <ng-container i18n="@@dstar">Dstar</ng-container>
-                        </div>
-                        <div *ngIf="info.tetra==true" >
-                          <ng-container i18n="@@tetra">Tetra</ng-container>
-                        </div>
-                        <div *ngIf="info.beacon==true" >
-                          <ng-container i18n="@@beacon">Beacon</ng-container>
-                        </div>
-                        <div *ngIf="info.atv==true" >
-                          <ng-container i18n="@@atv">ATV</ng-container>
-                        </div>
-                        <div *ngIf="info.digipeater==true" >
-                          <ng-container i18n="@@digipeater">Digipeater</ng-container>
-                        </div>
-                        <div *ngIf="info.other_mode_name" >
-                          {{info.other_mode_name}}
-                        </div>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.frequency_tx">
-                      <td>
-                        <ng-container i18n="@@frequency_tx">Frequency TX (downlink)</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.frequency_tx) | number: '1.3-4'}}&nbsp;<ng-container i18n="@@mbits">
-                        MHz
-                      </ng-container>
-
-                        <div *ngIf="info.ch">
-                          {{info.ch}}
-                          <div *ngIf="info.ch_new">
-                            ({{info.ch_new}})
-                          </div>
-                        </div>
-
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.frequency_rx">
-                      <td>
-                        <ng-container i18n="@@frequency_rx">Frequency RX (uplink)</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.frequency_rx) | number: '1.3-4' }}&nbsp;<ng-container i18n="@@mbits">
-                        MHz
-                      </ng-container>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.ctcss_rx">
-                      <td>
-                        <ng-container i18n="@@ctcss_rx">CTCSS RX (uplink)</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.ctcss_rx) | number: '1.1-1'}}&nbsp;<ng-container
-                        i18n="@@hz">Hz
-                      </ng-container>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.fm_wakeup">
-                      <td>
-                        <ng-container i18n="@@fm_wakeup">FM wakeup</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.fm_wakeup) }}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.ctcss_tx">
-                      <td>
-                        <ng-container i18n="@@ctcss_tx">CTCSS TX (downlink)</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.ctcss_tx) | number: '1.1-1'}}&nbsp;<ng-container
-                        i18n="@@hz">Hz
-                      </ng-container>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.sysop">
-                      <td>
-                        <ng-container i18n="@@sysop">Sysop</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.sysop) }}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.hardware">
-                      <td>
-                        <ng-container i18n="@@hardware">Hardware</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.hardware) }}&nbsp;
-                        <div *ngIf="info.mmdvm">
-                          <ng-container i18n="@@mmdvm">MMDVM</ng-container>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr *ngIf="(info.battery_power || info.solar_power)">
-                      <td>
-                        <ng-container i18n="@@power">Power</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">
-                        <div *ngIf="info.battery_power">
-                          <ng-container i18n="@@battery_power">Battery </ng-container>
-                        </div>
-                        <div *ngIf="info.solar_power">
-                          <ng-container i18n="@@solar_power">Solar</ng-container>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.antenna_heigth">
-                      <td>
-                        <ng-container i18n="@@antenna_heigth">Antenna heigth)</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.antenna_heigth) | number: '1.1-1'}}&nbsp;<ng-container
-                        i18n="@@meter2">m
-                      </ng-container>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.url">
-                      <td>
-                        <ng-container i18n="@@url">Web page</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn"><a href="{{info.url}}">
-                      {{info.url | shortenUrl}}
-                      </a>
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.echolink">
-                      <td>
-                        <ng-container i18n="@@echolink">Echolink</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.echolink_id) }}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.digital_id">
-                      <td>
-                        <ng-container i18n="@@digital_id">Digital ID</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.digital_id) }}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="(info.ipsc2 || info.brandmeister)">
-                      <td>
-                        <ng-container i18n="@@dmr_network">DMR network</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">
-                        <div *ngIf="info.ipsc2">
-                          <ng-container i18n="@@ipsc2">IPSC2 </ng-container>
-                        </div>
-                        <div *ngIf="info.brandmeister">
-                          <ng-container i18n="@@brandmeister">BM</ng-container>
-                        </div>
-                      </td>
-                    <tr *ngIf="info.cc">
-                      <td>
-                        <ng-container i18n="@@cc">Color code</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.cc)}}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.c4fm_groups">
-                      <td>
-                        <ng-container i18n="@@c4fm_groups">C4fm groups</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.c4fm_groups)}}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.dstar_rpt1">
-                      <td>
-                        <ng-container i18n="@@dstar_rpt1">Dstar RPT1</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.dstar_rpt1)}}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.dstar_rpt2">
-                      <td>
-                        <ng-container i18n="@@dstar_rpt2">Dstar RPT2</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.dstar_rpt2)}}&nbsp;
-                      </td>
-                    </tr>
-                    <tr *ngIf="info.comment">
-                      <td>
-                        <ng-container i18n="@@comment">Comment</ng-container>
-                      </td>
-                      <td class="uk-text-right valueColumn">{{(info.comment)}}&nbsp;
-                      </td>
-                    </tr>
-                    </tbody>
-                  </table>
-                </div>
+          <tr>
+            <td>
+              <ng-container i18n="@@supports">Site supports</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">
+              <div *ngIf="selectedSite.fm==true" >
+                <ng-container i18n="@@fm">FM</ng-container>
               </div>
-              <div class="alignToEnd">
+              <div *ngIf="selectedSite.dmr==true" >
+                <ng-container i18n="@@dmr">DMR</ng-container>
               </div>
-            </div>
-          </div>
+              <div *ngIf="selectedSite.c4fm==true" >
+                <ng-container i18n="@@c4fm">C4fm</ng-container>
+              </div>
+              <div *ngIf="selectedSite.dstar==true" >
+                <ng-container i18n="@@dstar">Dstar</ng-container>
+              </div>
+              <div *ngIf="selectedSite.tetra==true" >
+                <ng-container i18n="@@tetra">Tetra</ng-container>
+              </div>
+              <div *ngIf="selectedSite.beacon==true" >
+                <ng-container i18n="@@beacon">Beacon</ng-container>
+              </div>
+              <div *ngIf="selectedSite.atv==true" >
+                <ng-container i18n="@@atv">ATV</ng-container>
+              </div>
+              <div *ngIf="selectedSite.digipeater==true" >
+                <ng-container i18n="@@digipeater">Digipeater</ng-container>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="selectedSite.city">
+            <td>
+              <ng-container i18n="@@city">Next city</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{(selectedSite.city) }}
 
-          <div *ngIf="pointInfo">
+            </td>
+          </tr>
+          <tr *ngIf="selectedSite.latitude_formated">
+            <td>
+              <ng-container i18n="@@latitude">Latitude</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{(selectedSite.latitude_formated) }}
+
+            </td>
+          </tr>
+          <tr *ngIf="selectedSite.longitude_formated">
+            <td>
+              <ng-container i18n="@@longitude">Longitude</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{(selectedSite.longitude_formated) }}
+
+            </td>
+          </tr>
+          <tr *ngIf="selectedSite.locator_long">
+            <td>
+              <ng-container i18n="@@locator">Locator</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{selectedSite.locator_long}}
+
+
+            </td>
+          </tr>
+          <tr *ngIf="selectedSite.sea_level">
+            <td>
+              <ng-container i18n="@@sea_level">Sea level</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">{{(selectedSite.sea_level) }}&nbsp;<ng-container i18n="@@meter1">
+              m
+            </ng-container>
+            </td>
+          </tbody>
+        </table>
+
+        <div *ngIf="selectedSite">
+          <div *ngIf="trxInfo" class="uk-flex uk-flex-column fullHeight">
             <div class="alignToStart uk-width-expand">
-              <h3 i18n="@@nearby"> Nearby sites
-              </h3>
-              <p i18n="@@nearbyintro">Oops, there is no repeater where you clicked. But here is a list of nearby sites:
-              </p>
-              <div *ngFor="let info of pointInfo">
-                <ul>
-                  <li>
-                    {{(info.distance) / 1000 | number: '1.1-1'}} km for site {{info.site_name}}
-                  </li>
-                </ul>
+              <div *ngIf="selectedSite">
+                <h4><ng-container i18n="@@radios">Details</ng-container> </h4>
               </div>
+              <p>
+
+              </p>
+              <div *ngFor="let info of trxInfo">
+                <h4 class="uk-margin-top-50 uk-margin-remove-bottom"> {{info.callsign}} {{info.frequency_tx |number: '1.3-4'}} MHz</h4>
+                <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
+                  <thead>
+                  <tr>
+                    <th class="uk-text-left" i18n="@@parmeter">Parameter</th>
+                    <th class="uk-text-right" i18n="@@value">Value</th>
+
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <td>
+                      <ng-container i18n="@@trxsupports">Radio mode</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">
+                      <div *ngIf="info.fm==true" >
+                        <ng-container i18n="@@fm">FM</ng-container>
+                      </div>
+                      <div *ngIf="info.dmr==true" >
+                        <ng-container i18n="@@dmr">DMR</ng-container>
+                      </div>
+                      <div *ngIf="info.c4fm==true" >
+                        <ng-container i18n="@@c4fm">C4fm</ng-container>
+                      </div>
+                      <div *ngIf="info.dstar==true" >
+                        <ng-container i18n="@@dstar">Dstar</ng-container>
+                      </div>
+                      <div *ngIf="info.tetra==true" >
+                        <ng-container i18n="@@tetra">Tetra</ng-container>
+                      </div>
+                      <div *ngIf="info.beacon==true" >
+                        <ng-container i18n="@@beacon">Beacon</ng-container>
+                      </div>
+                      <div *ngIf="info.atv==true" >
+                        <ng-container i18n="@@atv">ATV</ng-container>
+                      </div>
+                      <div *ngIf="info.digipeater==true" >
+                        <ng-container i18n="@@digipeater">Digipeater</ng-container>
+                      </div>
+                      <div *ngIf="info.other_mode_name" >
+                        {{info.other_mode_name}}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.frequency_tx">
+                    <td>
+                      <ng-container i18n="@@frequency_tx">Frequency TX (downlink)</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.frequency_tx) | number: '1.3-4'}}&nbsp;<ng-container i18n="@@mbits">
+                      MHz
+                    </ng-container>
+
+                      <div *ngIf="info.ch">
+                        {{info.ch}}
+                        <div *ngIf="info.ch_new">
+                          ({{info.ch_new}})
+                        </div>
+                      </div>
+
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.frequency_rx">
+                    <td>
+                      <ng-container i18n="@@frequency_rx">Frequency RX (uplink)</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.frequency_rx) | number: '1.3-4' }}&nbsp;<ng-container i18n="@@mbits">
+                      MHz
+                    </ng-container>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.ctcss_rx">
+                    <td>
+                      <ng-container i18n="@@ctcss_rx">CTCSS RX (uplink)</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.ctcss_rx) | number: '1.1-1'}}&nbsp;<ng-container
+                      i18n="@@hz">Hz
+                    </ng-container>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.fm_wakeup">
+                    <td>
+                      <ng-container i18n="@@fm_wakeup">FM wakeup</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.fm_wakeup) }}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.ctcss_tx">
+                    <td>
+                      <ng-container i18n="@@ctcss_tx">CTCSS TX (downlink)</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.ctcss_tx) | number: '1.1-1'}}&nbsp;<ng-container
+                      i18n="@@hz">Hz
+                    </ng-container>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.sysop">
+                    <td>
+                      <ng-container i18n="@@sysop">Sysop</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.sysop) }}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.hardware">
+                    <td>
+                      <ng-container i18n="@@hardware">Hardware</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.hardware) }}&nbsp;
+                      <div *ngIf="info.mmdvm">
+                        <ng-container i18n="@@mmdvm">MMDVM</ng-container>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="(info.battery_power || info.solar_power)">
+                    <td>
+                      <ng-container i18n="@@power">Power</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">
+                      <div *ngIf="info.battery_power">
+                        <ng-container i18n="@@battery_power">Battery </ng-container>
+                      </div>
+                      <div *ngIf="info.solar_power">
+                        <ng-container i18n="@@solar_power">Solar</ng-container>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.antenna_heigth">
+                    <td>
+                      <ng-container i18n="@@antenna_heigth">Antenna heigth)</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.antenna_heigth) | number: '1.1-1'}}&nbsp;<ng-container
+                      i18n="@@meter2">m
+                    </ng-container>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.url">
+                    <td>
+                      <ng-container i18n="@@url">Web page</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn"><a href="{{info.url}}">
+                    {{info.url | shortenUrl}}
+                    </a>
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.echolink">
+                    <td>
+                      <ng-container i18n="@@echolink">Echolink</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.echolink_id) }}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.digital_id">
+                    <td>
+                      <ng-container i18n="@@digital_id">Digital ID</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.digital_id) }}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="(info.ipsc2 || info.brandmeister)">
+                    <td>
+                      <ng-container i18n="@@dmr_network">DMR network</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">
+                      <div *ngIf="info.ipsc2">
+                        <ng-container i18n="@@ipsc2">IPSC2 </ng-container>
+                      </div>
+                      <div *ngIf="info.brandmeister">
+                        <ng-container i18n="@@brandmeister">BM</ng-container>
+                      </div>
+                    </td>
+                  <tr *ngIf="info.cc">
+                    <td>
+                      <ng-container i18n="@@cc">Color code</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.cc)}}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.c4fm_groups">
+                    <td>
+                      <ng-container i18n="@@c4fm_groups">C4fm groups</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.c4fm_groups)}}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.dstar_rpt1">
+                    <td>
+                      <ng-container i18n="@@dstar_rpt1">Dstar RPT1</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.dstar_rpt1)}}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.dstar_rpt2">
+                    <td>
+                      <ng-container i18n="@@dstar_rpt2">Dstar RPT2</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.dstar_rpt2)}}&nbsp;
+                    </td>
+                  </tr>
+                  <tr *ngIf="info.comment">
+                    <td>
+                      <ng-container i18n="@@comment">Comment</ng-container>
+                    </td>
+                    <td class="uk-text-right valueColumn">{{(info.comment)}}&nbsp;
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="alignToEnd">
             </div>
           </div>
         </div>
-      </div>
+      </ng-container>
+      <ng-container *ngIf="pointInfo && !selectedSite">
+        <p i18n="@@nearbyintro">Oops, there is no repeater where you clicked. But here is a list of nearby sites:
+        </p>
+        <div *ngFor="let info of pointInfo">
+          <ul>
+            <li>
+              {{(info.distance) / 1000 | number: '1.1-1'}} km for site {{info.site_name}}
+            </li>
+          </ul>
+        </div>
+      </ng-container>
     </div>
-  </div>
+  </section>
+
+  <!-- Drawer: everything that used to be page chrome (intro, links, language, imprint). -->
+  <div *ngIf="drawerOpen" class="mscrim" (click)="drawerOpen = false"></div>
+  <aside class="mdrawer" [class.open]="drawerOpen" [attr.aria-hidden]="!drawerOpen">
+    <div class="mdrawer-head">
+      <a href="https://www.oevsv.at/"><img src="assets/oevsv_banner_white.svg" alt="ÖVSV" class="mdrawer-logo"></a>
+      <button type="button" class="mbtn" (click)="drawerOpen = false"
+              title="Close" i18n-title="@@close" aria-label="Close" i18n-aria-label="@@close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true" focusable="false">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <h2 class="mdrawer-title" i18n="@@cardMobile">Austrian Amateur radio repeaters</h2>
+    <div class="mdrawer-intro">
+        <ng-container i18n="@@introtext_details1">
+        Click on a repeater for further details.<p></p>
+        An interactive table of all repeaters can be found </ng-container>
+        <a routerLink="/list"><ng-container i18n="@@introtext_details1a"> here</ng-container></a>.
+        <p></p>
+        <ng-container i18n="@@introtext_details2">
+        Further information including downloadable repeater information, code plugs and Open Data can be found </ng-container>
+        <a href="https://www.oevsv.at/funkbetrieb/ukw-referat/maps/">
+          <ng-container i18n="@@introtext_details3">here</ng-container></a><ng-container i18n="@@introtext_details4">.</ng-container>
+        <div>
+        <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to</ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>.
+          </div>
+    </div>
+
+    <nav class="mdrawer-links">
+      <a routerLink="/list" i18n="@@listHeading">Repeater list</a>
+      <a i18n-href="@@oevsvdv-href" href="https://www.oevsv.at/" i18n="@@oevsvdv">ÖVSV Headquarter</a>
+      <a i18n="@@frequencies" href="https://www.oevsv.at/funkbetrieb/ukw-referat/">VHF Mgmt</a>
+    </nav>
+
+    <div class="mdrawer-foot">
+      <span class="mdrawer-lang">
+        <a href="/de/" [class.current]="locale.startsWith('de')" i18n="@@deutsch">Deutsch</a>
+        <a href="/en/" [class.current]="!locale.startsWith('de')" i18n="@@english">English</a>
+      </span>
+      <a href="https://www.oevsv.at/impressum/" i18n="@@imprint">
+    Legal notice</a>
+    </div>
+  </aside>
 </div>

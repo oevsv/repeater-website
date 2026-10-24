@@ -631,6 +631,42 @@
           <context context-type="linenumber">128</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="mapMenu" datatype="html">
+        <source>Menü</source>
+      </trans-unit>
+      <trans-unit id="searchPlaceholder" datatype="html">
+        <source>Name oder Rufzeichen</source>
+      </trans-unit>
+      <trans-unit id="mapFilters" datatype="html">
+        <source>Filter</source>
+      </trans-unit>
+      <trans-unit id="resetFilters" datatype="html">
+        <source>Filter zurücksetzen</source>
+      </trans-unit>
+      <trans-unit id="mapHint" datatype="html">
+        <source>Tippe auf einen Repeater für Details</source>
+      </trans-unit>
+      <trans-unit id="mapToggleDetails" datatype="html">
+        <source>Ein-/Ausklappen</source>
+      </trans-unit>
+      <trans-unit id="authLogin" datatype="html">
+        <source>Anmelden</source>
+      </trans-unit>
+      <trans-unit id="authCallsign" datatype="html">
+        <source>Rufzeichen</source>
+      </trans-unit>
+      <trans-unit id="authEmail" datatype="html">
+        <source>E-Mail</source>
+      </trans-unit>
+      <trans-unit id="authSubject" datatype="html">
+        <source>ID</source>
+      </trans-unit>
+      <trans-unit id="authVerified" datatype="html">
+        <source>bestätigt</source>
+      </trans-unit>
+      <trans-unit id="authLogout" datatype="html">
+        <source>Abmelden</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
