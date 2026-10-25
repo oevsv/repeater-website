@@ -328,7 +328,10 @@ export class FrqmapComponent implements OnInit {
       const pixel = that.map.getEventPixel(e.originalEvent);
       const hit = that.map.hasFeatureAtPixel(pixel);
 
-      that.map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+      const target = that.map.getTargetElement();
+      if (target) {
+        target.style.cursor = hit ? 'pointer' : '';
+      }
     });
 
     this.dumpSiteInfosForFiltering();
