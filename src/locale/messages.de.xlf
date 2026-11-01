@@ -668,6 +668,15 @@
       <trans-unit id="authFirstSeen" datatype="html">
         <source>Erstmals angemeldet</source>
       </trans-unit>
+      <trans-unit id="titleMap" datatype="html">
+        <source>Repeaterkarte ÖVSV</source>
+      </trans-unit>
+      <trans-unit id="titleMapType" datatype="html">
+        <source>Repeaterkarte ÖVSV – <x id="TYPE" equiv-text="${option.label}"/></source>
+      </trans-unit>
+      <trans-unit id="titleList" datatype="html">
+        <source>Repeaterliste ÖVSV</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

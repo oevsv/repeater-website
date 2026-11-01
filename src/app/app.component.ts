@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, Inject, LOCALE_ID } from '@angular/core';
 import { Router } from '@angular/router';
+import { SettingsService } from './map/settings.service';
 
 @Component({
   standalone: false,
@@ -11,18 +12,36 @@ import { Router } from '@angular/router';
 export class AppComponent {
   title = 'frq-map';
   drawerOpen = false;
+  /** One map page per repeater type (/<slug>/map), from the backend settings. */
+  mapTypes: { slug: string; label: string }[] = [];
 
-  constructor(private router: Router, @Inject(LOCALE_ID) public locale: string) {}
-
-  /** True on the /list route. The map page is full screen (floating navigation,
-   *  no footer); other pages get a solid navigation bar and a footer. */
-  get isListPage(): boolean {
-    return this.router.url.startsWith('/list');
+  constructor(private router: Router, @Inject(LOCALE_ID) public locale: string, settings: SettingsService) {
+    settings.settings$.subscribe((s) => {
+      this.mapTypes = s.filter.types.map((t) =>
+        // "all" is null in the settings (the map turns it into 'null').
+        t.type === null || t.type === 'null'
+          ? { slug: 'all', label: $localize`:@@allTypes:All repeater` }
+          : { slug: t.type.toLowerCase(), label: t.label });
+    });
   }
 
-  /** Current page path without the locale prefix, for the language switch. */
+  /** Repeater type of the current map page (/fm/map -> "fm"), else null. */
+  get currentMapType(): string | null {
+    const m = this.router.url.match(/^\/([^/?#]+)\/map(?:[/?#]|$)/);
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  /** True on a list page (/list, later e.g. /fm/list). Map pages are full
+   *  screen (floating navigation, no footer); list pages get a solid
+   *  navigation bar and a footer. */
+  get isListPage(): boolean {
+    return /^\/(?:[^/?#]+\/)?list(?:[/?#]|$)/.test(this.router.url);
+  }
+
+  /** Current page path without the locale prefix (e.g. /fm/map), so the
+   *  language switch stays on the same page. */
   get pagePath(): string {
-    return this.isListPage ? '/list' : '/';
+    return this.router.url.split(/[?#]/)[0];
   }
 
   @HostListener('document:keydown.escape')

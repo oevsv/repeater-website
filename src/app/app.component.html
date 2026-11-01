@@ -10,9 +10,9 @@
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </button>
-    <a routerLink="/" class="nav-logo"><img src="assets/oevsv_banner_white.svg" alt="ÖVSV"></a>
+    <a routerLink="/all/map" class="nav-logo"><img src="assets/oevsv_banner_white.svg" alt="ÖVSV"></a>
     <nav class="nav-pages">
-      <a routerLink="/" routerLinkActive="current" [routerLinkActiveOptions]="{ exact: true }"
+      <a routerLink="/all/map" [class.current]="!isListPage"
          i18n="@@navMap">Map</a>
       <a routerLink="/list" routerLinkActive="current" i18n="@@navList">List</a>
     </nav>
@@ -46,8 +46,15 @@
   <h2 class="drawer-title" i18n="@@cardMobile">Austrian Amateur radio repeaters</h2>
 
   <nav class="drawer-links drawer-pages" (click)="drawerOpen = false">
-    <a routerLink="/" routerLinkActive="current" [routerLinkActiveOptions]="{ exact: true }"
-       i18n="@@navMap">Map</a>
+    <div class="drawer-map">
+      <a routerLink="/all/map" [class.current]="!isListPage"
+         i18n="@@navMap">Map</a>
+      <!-- One map page per repeater type; the current one is highlighted. -->
+      <div class="drawer-types">
+        <a *ngFor="let t of mapTypes" [routerLink]="['/', t.slug, 'map']"
+           [class.current]="t.slug === currentMapType">{{ t.label }}</a>
+      </div>
+    </div>
     <a routerLink="/list" routerLinkActive="current" i18n="@@navList">List</a>
   </nav>
 

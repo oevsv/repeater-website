@@ -10,7 +10,7 @@
     <form class="mbar-card mbar-filter" (submit)="$event.preventDefault()">
       <select *ngIf="formOptions" class="mbar-select" name="statistik_type"
               aria-label="Repeater type" i18n-aria-label="@@repeaterType"
-              [(ngModel)]="selectedType" (ngModelChange)="loadSites()">
+              [(ngModel)]="selectedType" (ngModelChange)="onTypeSelected()">
         <option *ngFor="let repeaterTypes of formOptions.filter.types" [value]="repeaterTypes.type">
           <ng-container *ngIf="repeaterTypes.label === '@all'" i18n="@@allTypes">All repeater</ng-container>
           <ng-container *ngIf="repeaterTypes.label !== '@all'">

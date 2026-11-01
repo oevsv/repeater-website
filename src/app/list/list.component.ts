@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Title } from '@angular/platform-browser';
 
 /** One row of the /api/trx feed. Mirrors the shape used by the original
  *  oevsv-repeaterliste; extra backend fields are tolerated via the index
@@ -107,9 +108,10 @@ export class ListComponent implements OnInit {
     { value: 'historic', label: 'Historisch' },
   ];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private title: Title) {}
 
   ngOnInit(): void {
+    this.title.setTitle($localize`:@@titleList:ÖVSV repeater list`);
     this.http.get<Repeater[]>('/api/trx', { headers: { Accept: 'application/json' } }).subscribe({
       next: (data) => {
         this.repeaters = data ?? [];

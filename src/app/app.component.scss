@@ -210,6 +210,39 @@ $accent: #008CEA; // $oevsv-blue
   }
 }
 
+// "Map" plus one link per repeater type (/fm/map, ...), shown as chips.
+.drawer-map {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+
+  > a {
+    display: block;
+    padding: 10px 0 8px;
+    border-bottom: none; // the block as a whole has the separator line
+  }
+}
+
+.drawer-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  a {
+    padding: 3px 10px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    font-size: 0.9em;
+    text-decoration: none;
+
+    &.current {
+      border-color: $accent;
+      background: $accent;
+      color: #fff !important;
+      font-weight: 600;
+    }
+  }
+}
+
 .drawer-foot {
   display: flex;
   flex-wrap: wrap;

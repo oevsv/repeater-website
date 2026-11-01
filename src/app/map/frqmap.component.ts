@@ -20,6 +20,8 @@ import WMTSSource, {optionsFromCapabilities} from 'ol/source/WMTS'
 import * as olProj from "ol/proj";
 import {Extent, boundingExtent} from "ol/extent";
 import {HttpClient} from "@angular/common/http";
+import {ActivatedRoute, Router} from "@angular/router";
+import {Title} from "@angular/platform-browser";
 import {Source, XYZ} from "ol/source";
 import {Coordinate} from "ol/coordinate";
 import VectorSource from "ol/source/Vector";
@@ -33,6 +35,7 @@ import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
 import { RepeaterStatusService } from './repeater-status.service';
+import { SettingsService } from './settings.service';
 
 
 //const baseUrl : String = "https://repeater.oevsv.at/api"
@@ -55,6 +58,9 @@ const TOP_BAR_HEIGHT = 120;
 /** Mobile: share of Austria visible initially - zoomed in slightly further than
  *  a full fit, so the edges are cut off on purpose. */
 const MOBILE_VISIBLE_SHARE = 0.9;
+/** URL segment for "all repeater types" (/de/all/map); the settings call that
+ *  type null, which the component keeps as the string 'null'. */
+const ALL_TYPES_SLUG = 'all';
 /** localStorage key remembering that the "tap a repeater" hint was dismissed. */
 const HINT_DISMISSED_KEY = 'frqmap.hintDismissed';
 
@@ -229,6 +235,11 @@ export class FrqmapComponent implements OnInit {
   showHint = !readHintDismissed();
   /** Repeater type selected by default (from /settings), to detect active filters. */
   private defaultType: String | null = null;
+  /** Repeater type from the URL (/de/<type>/map), lower case; applied once the
+   *  settings with the known types have loaded. */
+  private routeType: string = ALL_TYPES_SLUG;
+  /** Type the repeaters were last loaded for (avoids loading them twice). */
+  private loadedType: String | null = null;
 
   // Single marker for the clicked / located point (red pin for map clicks,
   // blue pin for the locate button). Distinct from the round repeater dots.
@@ -252,7 +263,11 @@ export class FrqmapComponent implements OnInit {
 
   constructor(
     private http : HttpClient,
-    private statusService : RepeaterStatusService
+    private statusService : RepeaterStatusService,
+    private settingsService : SettingsService,
+    private route : ActivatedRoute,
+    private router : Router,
+    private title : Title
   ) { }
 
   /** Most precise locator of the clicked / located point: 20 characters, or 10
@@ -291,6 +306,45 @@ export class FrqmapComponent implements OnInit {
     this.filterFrequency = '';
     this.filterName = '';
     this.loadSites();
+    this.navigateToType();
+  }
+
+  /** The type dropdown changed: show those repeaters and put the type into the
+   *  URL (a new history entry, so "back" returns to the previous type). */
+  onTypeSelected(): void {
+    this.loadSites();
+    this.navigateToType();
+  }
+
+  private navigateToType(): void {
+    const slug = this.selectedType === 'null' ? ALL_TYPES_SLUG : String(this.selectedType).toLowerCase();
+    if (slug !== this.routeType) {
+      this.router.navigate(['/', slug, 'map']);
+    }
+  }
+
+  /** Applies the type from the URL: selects it (loading its repeaters if it
+   *  differs) and sets the page title. Unknown types go to /all/map; upper case
+   *  in the URL is normalised to lower case. */
+  private applyRouteType(): void {
+    const wanted = this.routeType === ALL_TYPES_SLUG ? 'null' : this.routeType;
+    const option = this.formOptions.filter.types.find((o) => String(o.type).toLowerCase() === wanted);
+    if (!option) {
+      this.router.navigate(['/', ALL_TYPES_SLUG, 'map'], { replaceUrl: true });
+      return;
+    }
+    if (this.route.snapshot.paramMap.get('type') !== this.routeType) {
+      this.router.navigate(['/', this.routeType, 'map'], { replaceUrl: true });
+    }
+    // "all" is null in the settings; the component keeps it as the string 'null'.
+    const type = option.type ?? 'null';
+    if (this.selectedType !== type || this.loadedType !== type) {
+      this.selectedType = type;
+      this.loadSites();
+    }
+    this.title.setTitle(type === 'null'
+      ? $localize`:@@titleMap:ÖVSV repeater map`
+      : $localize`:@@titleMapType:ÖVSV repeater map – ${option.label}:TYPE:`);
   }
 
   dismissHint(): void {
@@ -313,6 +367,14 @@ export class FrqmapComponent implements OnInit {
 
   ngOnInit(): void {
     console.log("init")
+    // /de/fm/map -> /de/dmr/map reuses this component, so follow the parameter
+    // (also covers the browser's back / forward buttons).
+    this.route.paramMap.subscribe((params) => {
+      this.routeType = (params.get('type') ?? ALL_TYPES_SLUG).toLowerCase();
+      if (this.formOptions) {
+        this.applyRouteType();
+      }
+    });
     this.loadOptions()
     this.initMap()
     // Live status polling is wired up but the service is disabled until the
@@ -558,12 +620,8 @@ export class FrqmapComponent implements OnInit {
   }
 
   private loadOptions() {
-    let url = `${baseUrl}/settings`;
-    this.http.get<FormOptionResponse>(url,
-      {
-        headers: {
-          "Accept": "application/vnd.pgrst.object+json"
-        }})
+    // Shared with the navigation, which lists a map page per type.
+    this.settingsService.settings$
       .subscribe((response) => {
         this.formOptions = response;
 
@@ -594,7 +652,8 @@ export class FrqmapComponent implements OnInit {
           }
           console.log("label set to ", this.selectedTypeLabel);
 
-        this.loadSites()
+        // The type in the URL decides which repeaters are shown (it loads them).
+        this.applyRouteType()
         // after initial load update sites every 30s
         // todo, this-context is lost, thus selectedType becomes undefined
         //setInterval(this.loadSites, 5000);
@@ -604,6 +663,7 @@ export class FrqmapComponent implements OnInit {
 
  loadSites() {
    console.log("loadSites");
+   this.loadedType = this.selectedType;
     // A filter change (repeater type / frequency / call sign) rebuilds the marker
     // set and may drop the currently selected repeater. Remove its coverage
     // overlay so a stale coverage layer doesn't linger over the refiltered map.
