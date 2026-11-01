@@ -64,7 +64,7 @@
               title="Collapse / expand" i18n-title="@@mapToggleDetails">
         <span class="mdetails-handle" aria-hidden="true"></span>
         <h3 *ngIf="selectedSite" class="mdetails-title" i18n="@@trx_information">Site {{ selectedSite.site_name }} {{selectedSite.locator_short}}</h3>
-        <h3 *ngIf="pointInfo && !selectedSite" class="mdetails-title" i18n="@@nearby"> Nearby sites
+        <h3 *ngIf="(pointInfo || pointLocation) && !selectedSite" class="mdetails-title" i18n="@@nearby"> Nearby sites
         </h3>
         <svg class="mdetails-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -391,7 +391,25 @@
           </div>
         </div>
       </ng-container>
-      <ng-container *ngIf="pointInfo && !selectedSite">
+      <ng-container *ngIf="(pointInfo || pointLocation) && !selectedSite">
+        <!-- The clicked / located point itself (computed by the backend, rpc/point_info). -->
+        <table *ngIf="pointLocation" class="uk-table uk-table-small uk-table-striped uk-margin-remove-top point-location">
+          <tbody>
+          <tr>
+            <td><ng-container i18n="@@latitude">Latitude</ng-container></td>
+            <td class="uk-text-right valueColumn">{{ pointLocation.latitude_formated }}</td>
+          </tr>
+          <tr>
+            <td><ng-container i18n="@@longitude">Longitude</ng-container></td>
+            <td class="uk-text-right valueColumn">{{ pointLocation.longitude_formated }}</td>
+          </tr>
+          <tr>
+            <td><ng-container i18n="@@locator">Locator</ng-container></td>
+            <td class="uk-text-right valueColumn"><strong>{{ pointLocation.locator_10.slice(0, 6) }}</strong>{{ pointLocation.locator_10.slice(6) }}</td>
+          </tr>
+          </tbody>
+        </table>
+        <ng-container *ngIf="pointInfo">
         <p i18n="@@nearbyintro">Oops, there is no repeater where you clicked. But here is a list of nearby sites:
         </p>
         <!-- Picking a site highlights it on the map, linked to the clicked point. -->
@@ -404,6 +422,7 @@
                     (click)="openNearbySite(info)" i18n="@@radios">Details</button>
           </li>
         </ul>
+        </ng-container>
       </ng-container>
     </div>
   </section>

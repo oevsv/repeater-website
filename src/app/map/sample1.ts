@@ -41,6 +41,19 @@ export interface PointInformation {
  latitude?: number;
 }
 
+/** Locator and formatted coordinates of a clicked / located point
+ *  (GET /api/rpc/point_info?x=<lon>&y=<lat>). */
+export interface PointLocation {
+ longitude: number;
+ latitude: number;
+ longitude_formated: string;
+ latitude_formated: string;
+ /** e.g. JN87JT */
+ locator_6: string;
+ /** e.g. JN87JT12EA */
+ locator_10: string;
+}
+
 export interface TrxInformation {
   site_name: string,
   city: string,

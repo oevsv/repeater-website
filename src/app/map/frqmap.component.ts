@@ -6,6 +6,7 @@ import sampleResponseToReq1, {
   LayerConfiguration,
   RepeaterType,
   PointInformation,
+  PointLocation,
   TrxInformation,
 } from './sample1';
 
@@ -26,7 +27,7 @@ import {Collection, Feature, Overlay} from "ol";
 import {GeoJSON} from "ol/format";
 import VectorLayer from "ol/layer/Vector";
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
-import {Fill, Icon, Stroke, Style} from "ol/style";
+import {Fill, Icon, Stroke, Style, Text} from "ol/style";
 import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
@@ -77,6 +78,21 @@ function locationPin(fill: string): Style {
 const CLICK_MARKER_STYLE = locationPin('#d32f2f');
 /** Blue pin: dropped at the user's GPS position by the "locate" button. */
 const LOCATE_MARKER_STYLE = locationPin('#1565c0');
+/** Label under the location pin showing the point's 6-character locator. */
+function locatorLabel(locator: string): Style {
+  return new Style({
+    text: new Text({
+      text: locator,
+      font: '600 13px "Open Sans", sans-serif',
+      textBaseline: 'top',
+      offsetY: 6,
+      fill: new Fill({ color: '#222222' }),
+      backgroundFill: new Fill({ color: 'rgba(255, 255, 255, 0.9)' }),
+      backgroundStroke: new Stroke({ color: 'rgba(0, 0, 0, 0.2)', width: 1 }),
+      padding: [2, 5, 1, 5],
+    }),
+  });
+}
 /** Blue line from the clicked / located point to a repeater picked from the
  *  nearby list, with a white casing so it stands out on the grey basemap. */
 const LINK_STYLE = [
@@ -199,6 +215,8 @@ export class FrqmapComponent implements OnInit {
   trxInfo: TrxInformation[] | null;
   trxInfoDump: TrxInformation[] | null;
   pointInfo: PointInformation[] | null;
+  /** Locator / formatted coordinates of the clicked or located point. */
+  pointLocation: PointLocation | null = null;
   selectedSite: Site | null;
   selectedFeature: Feature<any>;
   sitesInfo: Site[];
@@ -217,6 +235,8 @@ export class FrqmapComponent implements OnInit {
   private readonly clickMarkerSource: VectorSource<any> = new VectorSource();
   private clickMarkerLayer: VectorLayer<VectorSource<any>> | null = null;
   private locationMarkerFeature: Feature<any> | null = null;
+  /** Counts point_info requests, so a late answer can't label a newer pin. */
+  private pointLocationRequest = 0;
   // Vector source holding the repeater markers, so individual markers can be
   // looked up by site name and recoloured (selection / live status).
   private siteVectorSource: VectorSource<any> | null = null;
@@ -236,7 +256,7 @@ export class FrqmapComponent implements OnInit {
   ) { }
 
   get hasDetails(): boolean {
-    return !!this.selectedSite || !!this.pointInfo;
+    return !!this.selectedSite || !!this.pointInfo || !!this.pointLocation;
   }
 
   /** Any filter differs from its default (offers "Reset filters"). */
@@ -466,11 +486,19 @@ export class FrqmapComponent implements OnInit {
       target = [freeWidth / 2, pixel[1]];
     } else {
       // The sheet covers up to ~60% of the height; aim for the middle of the rest.
+      // Horizontally keep the pin and its locator label clear of the screen
+      // edges and of the locate button on the right.
       const freeHeight = height * 0.4;
-      if (pixel[1] >= TOP_BAR_HEIGHT && pixel[1] <= freeHeight) {
+      const minX = 48;
+      const maxX = width - 72;
+      const x = Math.min(Math.max(pixel[0], minX), maxX);
+      if (pixel[1] >= TOP_BAR_HEIGHT && pixel[1] <= freeHeight && x === pixel[0]) {
         return;
       }
-      target = [pixel[0], TOP_BAR_HEIGHT + (freeHeight - TOP_BAR_HEIGHT) / 2];
+      const y = pixel[1] >= TOP_BAR_HEIGHT && pixel[1] <= freeHeight
+        ? pixel[1]
+        : TOP_BAR_HEIGHT + (freeHeight - TOP_BAR_HEIGHT) / 2;
+      target = [x, y];
     }
     const view = this.map.getView();
     const center = view.getCenter();
@@ -725,6 +753,8 @@ export class FrqmapComponent implements OnInit {
 
     console.log("looking up",long,lat);
 
+    this.loadPointLocation(long, lat);
+
     let url = `${baseUrl}/rpc/geo?x=${long}&y=${lat}`
 
     this.http.get<PointInformation[]>(url, {
@@ -734,8 +764,9 @@ export class FrqmapComponent implements OnInit {
     })
       .subscribe((val) => {
         console.log("lookup callback received");
+        // No sites within range: drop the list of a previous click.
+        this.pointInfo = val.length > 0 ? val : null;
         if (val.length > 0) {
-          this.pointInfo = val
 
           let first = val[0];
 /*
@@ -1000,6 +1031,8 @@ export class FrqmapComponent implements OnInit {
     this.selectedSite = null;
     this.trxInfo = null;
     this.pointInfo = null;
+    this.pointLocation = null;
+    this.pointLocationRequest++;
     this.removeOverlaySource();
   }
 
@@ -1019,6 +1052,32 @@ export class FrqmapComponent implements OnInit {
   private clearLocationMarker(): void {
     this.clickMarkerSource.clear();
     this.locationMarkerFeature = null;
+    this.pointLocation = null;
+    this.pointLocationRequest++;
+  }
+
+  /** Fetches locator and formatted coordinates of the clicked / located point
+   *  (computed by the backend) and labels the pin with the 6-character locator. */
+  private loadPointLocation(longitude: number, latitude: number): void {
+    const request = ++this.pointLocationRequest;
+    this.pointLocation = null;
+    this.http.get<PointLocation>(`${baseUrl}/rpc/point_info?x=${longitude}&y=${latitude}`, {
+      headers: { "Accept": "application/vnd.pgrst.object+json" }
+    }).subscribe({
+      next: (location) => {
+        if (request !== this.pointLocationRequest) {
+          return; // the user clicked elsewhere meanwhile
+        }
+        this.pointLocation = location;
+        const pin = this.locationMarkerFeature;
+        const pinStyle = pin?.getStyle();
+        if (pin && pinStyle instanceof Style) {
+          pin.setStyle([pinStyle, locatorLabel(location.locator_6)]);
+        }
+      },
+      // Backend without point_info: the pin and the nearby list still work.
+      error: (err) => console.warn('point_info not available', err),
+    });
   }
 
   /** (Re)applies a repeater feature's current colours to its style. The disc is
