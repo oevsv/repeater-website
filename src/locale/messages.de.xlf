@@ -667,6 +667,18 @@
       <trans-unit id="authLogout" datatype="html">
         <source>Abmelden</source>
       </trans-unit>
+      <trans-unit id="navMap" datatype="html">
+        <source>Karte</source>
+      </trans-unit>
+      <trans-unit id="navList" datatype="html">
+        <source>Liste</source>
+      </trans-unit>
+      <trans-unit id="frequencyPlaceholder" datatype="html">
+        <source>Frequenz</source>
+      </trans-unit>
+      <trans-unit id="repeaterType" datatype="html">
+        <source>Repeatertyp</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

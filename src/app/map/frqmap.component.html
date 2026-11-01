@@ -4,39 +4,12 @@
 
   <div id="map" class="map-canvas"></div>
 
-  <!-- Top bar: menu + search/filter on the left, login on the right. -->
+  <!-- Filter bar below the shared navigation: repeater type (selection always
+       visible) and frequency; the funnel folds out the name / call sign search. -->
   <div class="mbar">
-    <div class="mbar-card mbar-search">
-      <button type="button" class="mbtn" (click)="drawerOpen = true"
-              title="Menu" i18n-title="@@mapMenu" aria-label="Menu" i18n-aria-label="@@mapMenu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" aria-hidden="true" focusable="false">
-          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
-      <img class="mbar-logo" src="assets/oevsv_banner_white.svg" alt="ÖVSV">
-      <input type="search" class="mbar-input" name="name_filter" autocomplete="off"
-             placeholder="Name or call sign" i18n-placeholder="@@searchPlaceholder"
-             aria-label="Name or call sign" i18n-aria-label="@@searchPlaceholder"
-             [(ngModel)]="filterName" (ngModelChange)="loadSites()">
-      <button type="button" class="mbtn" [class.active]="filtersOpen" (click)="filtersOpen = !filtersOpen"
-              title="Filters" i18n-title="@@mapFilters" aria-label="Filters" i18n-aria-label="@@mapFilters">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/>
-        </svg>
-        <span *ngIf="filtersActive" class="mbtn-dot"></span>
-      </button>
-    </div>
-
-    <div class="mbar-card mbar-user">
-      <app-login-widget></app-login-widget>
-    </div>
-
-    <!-- Filter panel, folds out below the search card. -->
-    <form *ngIf="filtersOpen" class="mbar-card mfilters" (submit)="$event.preventDefault()">
-      <label for="statistik_type" i18n="@@operator">Repeater type: </label>
-      <select *ngIf="formOptions" class="uk-select" id="statistik_type" name="statistik_type"
+    <form class="mbar-card mbar-filter" (submit)="$event.preventDefault()">
+      <select *ngIf="formOptions" class="mbar-select" name="statistik_type"
+              aria-label="Repeater type" i18n-aria-label="@@repeaterType"
               [(ngModel)]="selectedType" (ngModelChange)="loadSites()">
         <option *ngFor="let repeaterTypes of formOptions.filter.types" [value]="repeaterTypes.type">
           <ng-container *ngIf="repeaterTypes.label === '@all'" i18n="@@allTypes">All repeater</ng-container>
@@ -45,9 +18,27 @@
           </ng-container>
         </option>
       </select>
-      <label for="frequency_filter" i18n="@@frequency">Frequency: </label>
-      <input type="text" inputmode="decimal" class="uk-input" id="frequency_filter" name="frequency_filter"
+      <input type="search" inputmode="decimal" class="mbar-input" name="frequency_filter" autocomplete="off"
+             placeholder="Frequency" i18n-placeholder="@@frequencyPlaceholder"
+             aria-label="Frequency" i18n-aria-label="@@frequencyPlaceholder"
              [(ngModel)]="filterFrequency" (ngModelChange)="loadSites()">
+      <button type="button" class="mbtn" [class.active]="filtersOpen" (click)="toggleFilters()"
+              [attr.aria-expanded]="filtersOpen"
+              title="Filters" i18n-title="@@mapFilters" aria-label="Filters" i18n-aria-label="@@mapFilters">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/>
+        </svg>
+        <span *ngIf="nameFilterActive" class="mbtn-dot"></span>
+      </button>
+    </form>
+
+    <!-- Folds out directly below the filter bar. -->
+    <form *ngIf="filtersOpen" class="mbar-card mfilters" (submit)="$event.preventDefault()">
+      <input #nameInput type="search" class="uk-input" name="name_filter" autocomplete="off"
+             placeholder="Name or call sign" i18n-placeholder="@@searchPlaceholder"
+             aria-label="Name or call sign" i18n-aria-label="@@searchPlaceholder"
+             [(ngModel)]="filterName" (ngModelChange)="loadSites()">
       <button *ngIf="filtersActive" type="button" class="uk-button uk-button-default uk-button-small mfilters-reset"
               (click)="resetFilters()" i18n="@@resetFilters">Reset filters</button>
     </form>
@@ -413,49 +404,4 @@
       </ng-container>
     </div>
   </section>
-
-  <!-- Drawer: everything that used to be page chrome (intro, links, language, imprint). -->
-  <div *ngIf="drawerOpen" class="mscrim" (click)="drawerOpen = false"></div>
-  <aside class="mdrawer" [class.open]="drawerOpen" [attr.aria-hidden]="!drawerOpen">
-    <div class="mdrawer-head">
-      <a href="https://www.oevsv.at/"><img src="assets/oevsv_banner_white.svg" alt="ÖVSV" class="mdrawer-logo"></a>
-      <button type="button" class="mbtn" (click)="drawerOpen = false"
-              title="Close" i18n-title="@@close" aria-label="Close" i18n-aria-label="@@close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" aria-hidden="true" focusable="false">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    <h2 class="mdrawer-title" i18n="@@cardMobile">Austrian Amateur radio repeaters</h2>
-    <div class="mdrawer-intro">
-        <ng-container i18n="@@introtext_details1">
-        Click on a repeater for further details.<p></p>
-        An interactive table of all repeaters can be found </ng-container>
-        <a routerLink="/list"><ng-container i18n="@@introtext_details1a"> here</ng-container></a>.
-        <p></p>
-        <ng-container i18n="@@introtext_details2">
-        Further information including downloadable repeater information, code plugs and Open Data can be found </ng-container>
-        <a href="https://www.oevsv.at/funkbetrieb/ukw-referat/maps/">
-          <ng-container i18n="@@introtext_details3">here</ng-container></a><ng-container i18n="@@introtext_details4">.</ng-container>
-        <div>
-        <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to</ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>.
-          </div>
-    </div>
-
-    <nav class="mdrawer-links">
-      <a routerLink="/list" i18n="@@listHeading">Repeater list</a>
-      <a i18n-href="@@oevsvdv-href" href="https://www.oevsv.at/" i18n="@@oevsvdv">ÖVSV Headquarter</a>
-      <a i18n="@@frequencies" href="https://www.oevsv.at/funkbetrieb/ukw-referat/">VHF Mgmt</a>
-    </nav>
-
-    <div class="mdrawer-foot">
-      <span class="mdrawer-lang">
-        <a href="/de/" [class.current]="locale.startsWith('de')" i18n="@@deutsch">Deutsch</a>
-        <a href="/en/" [class.current]="!locale.startsWith('de')" i18n="@@english">English</a>
-      </span>
-      <a href="https://www.oevsv.at/impressum/" i18n="@@imprint">
-    Legal notice</a>
-    </div>
-  </aside>
 </div>

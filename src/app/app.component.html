@@ -1,17 +1,25 @@
-<!-- The map page (/) is full screen and brings its own floating widgets
-     (menu drawer, search, login). Other pages get a slim header and footer. -->
-<header *ngIf="isListPage" class="page-bar">
-  <a routerLink="/" class="page-brand">
-    <img src="assets/oevsv_banner_white.svg" alt="ÖVSV">
-  </a>
-  <a routerLink="/" class="page-back">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-      <polyline points="15 18 9 12 15 6"/>
-    </svg>
-    <span i18n="@@bcRepeaterMap">Repeater-Map</span>
-  </a>
-  <app-login-widget class="page-user"></app-login-widget>
+<!-- Shared navigation for all pages: menu, logo, page links (current one bold)
+     and login. On the full-screen map it floats as cards over the map; on other
+     pages it is a regular sticky bar. -->
+<header class="app-nav" [class.app-nav-floating]="!isListPage">
+  <div class="nav-card nav-main">
+    <button type="button" class="nav-btn" (click)="drawerOpen = true"
+            title="Menu" i18n-title="@@mapMenu" aria-label="Menu" i18n-aria-label="@@mapMenu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true" focusable="false">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <a routerLink="/" class="nav-logo"><img src="assets/oevsv_banner_white.svg" alt="ÖVSV"></a>
+    <nav class="nav-pages">
+      <a routerLink="/" routerLinkActive="current" [routerLinkActiveOptions]="{ exact: true }"
+         i18n="@@navMap">Map</a>
+      <a routerLink="/list" routerLinkActive="current" i18n="@@navList">List</a>
+    </nav>
+  </div>
+  <div class="nav-card nav-user">
+    <app-login-widget></app-login-widget>
+  </div>
 </header>
 
 <router-outlet></router-outlet>
@@ -20,8 +28,56 @@
   <a href="https://www.oevsv.at/impressum/" i18n="@@imprint">
     Legal notice</a>
   <a href="mailto:ukw@oevsv.at">ukw&#64;oevsv.at</a>
-  <span class="page-lang">
-    <a href="/de/list" i18n="@@deutsch">Deutsch</a> ·
-    <a href="/en/list" i18n="@@english">English</a>
-  </span>
 </footer>
+
+<!-- Drawer: intro, page navigation, links, language, imprint. -->
+<div *ngIf="drawerOpen" class="drawer-scrim" (click)="drawerOpen = false"></div>
+<aside class="drawer" [class.open]="drawerOpen" [attr.aria-hidden]="!drawerOpen">
+  <div class="drawer-head">
+    <a href="https://www.oevsv.at/"><img src="assets/oevsv_banner_white.svg" alt="ÖVSV" class="drawer-logo"></a>
+    <button type="button" class="nav-btn" (click)="drawerOpen = false"
+            title="Close" i18n-title="@@close" aria-label="Close" i18n-aria-label="@@close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true" focusable="false">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <h2 class="drawer-title" i18n="@@cardMobile">Austrian Amateur radio repeaters</h2>
+
+  <nav class="drawer-links drawer-pages" (click)="drawerOpen = false">
+    <a routerLink="/" routerLinkActive="current" [routerLinkActiveOptions]="{ exact: true }"
+       i18n="@@navMap">Map</a>
+    <a routerLink="/list" routerLinkActive="current" i18n="@@navList">List</a>
+  </nav>
+
+  <div class="drawer-intro">
+    <ng-container i18n="@@introtext_details1">
+    Click on a repeater for further details.<p></p>
+    An interactive table of all repeaters can be found </ng-container>
+    <a routerLink="/list" (click)="drawerOpen = false"><ng-container i18n="@@introtext_details1a"> here</ng-container></a>.
+    <p></p>
+    <ng-container i18n="@@introtext_details2">
+    Further information including downloadable repeater information, code plugs and Open Data can be found </ng-container>
+    <a href="https://www.oevsv.at/funkbetrieb/ukw-referat/maps/">
+      <ng-container i18n="@@introtext_details3">here</ng-container></a><ng-container i18n="@@introtext_details4">.</ng-container>
+    <div>
+    <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to</ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>.
+      </div>
+  </div>
+
+  <nav class="drawer-links">
+    <a i18n-href="@@oevsvdv-href" href="https://www.oevsv.at/" i18n="@@oevsvdv">ÖVSV Headquarter</a>
+    <a i18n="@@frequencies" href="https://www.oevsv.at/funkbetrieb/ukw-referat/">VHF Mgmt</a>
+  </nav>
+
+  <div class="drawer-foot">
+    <span class="drawer-lang">
+      <!-- Full page loads: each language is a separate build under /de/ and /en/. -->
+      <a [href]="'/de' + pagePath" [class.current]="locale.startsWith('de')" i18n="@@deutsch">Deutsch</a>
+      <a [href]="'/en' + pagePath" [class.current]="!locale.startsWith('de')" i18n="@@english">English</a>
+    </span>
+    <a href="https://www.oevsv.at/impressum/" i18n="@@imprint">
+    Legal notice</a>
+  </div>
+</aside>

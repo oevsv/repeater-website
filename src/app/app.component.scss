@@ -1,32 +1,121 @@
-// Slim chrome for non-map pages (the map page is full screen, see frqmap).
-.page-bar {
+// Shared navigation, drawer and footer. On the map page the navigation floats
+// over the full-screen map (.app-nav-floating); elsewhere it is a sticky bar.
+// Keep the floating height (48px cards + 8px gap) in sync with frqmap
+// (TOP_BAR_HEIGHT and the .mbar offset).
+
+$gap: 8px;
+$radius: 10px;
+$shadow: 0 1px 4px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.08);
+$accent: #008CEA; // $oevsv-blue
+
+/* --- navigation -------------------------------------------------------- */
+
+.app-nav {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 36; // above the map's details panel, so the login dropdown isn't covered
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: $gap;
   height: 56px;
-  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  padding: 0 max(#{$gap}, env(safe-area-inset-right)) 0 max(#{$gap}, env(safe-area-inset-left));
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-.page-brand img {
-  display: block;
-  height: 34px;
-}
-
-.page-back {
-  display: inline-flex;
+.nav-card {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  color: #333;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 4px;
 }
 
-.page-user {
+.nav-main {
+  min-width: 0;
+}
+
+.nav-user {
+  flex: none;
   margin-left: auto;
 }
+
+.app-nav-floating {
+  position: fixed;
+  top: max(#{$gap}, env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none; // only the cards catch clicks, the map stays usable
+
+  .nav-card {
+    background: #fff;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    pointer-events: auto;
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.nav-logo {
+  display: none;
+  flex: none;
+  margin: 0 4px 0 2px;
+
+  img {
+    display: block;
+    height: 30px;
+  }
+}
+
+.nav-pages {
+  display: flex;
+  align-items: center;
+
+  a {
+    padding: 0 10px;
+    line-height: 40px;
+    border-radius: 8px;
+    color: #333 !important; // beat the theme's blue link colour
+    text-decoration: none;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    &.current {
+      font-weight: 700;
+    }
+  }
+}
+
+@media (min-width: 640px) {
+  .nav-logo {
+    display: block;
+  }
+}
+
+/* --- footer (non-map pages) --------------------------------------------- */
 
 .page-footer {
   display: flex;
@@ -37,13 +126,114 @@
   font-size: 0.9em;
 }
 
-.page-lang {
-  margin-left: auto;
+/* --- drawer ------------------------------------------------------------ */
+
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.3);
+  animation: drawer-fade 0.2s;
 }
 
-@media (max-width: 479px) {
-  // Phones: the back link alone says enough, drop the logo.
-  .page-brand {
-    display: none;
+@keyframes drawer-fade {
+  from { opacity: 0; }
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(360px, 88%);
+  padding: max(#{$gap}, env(safe-area-inset-top)) 16px max(#{$gap}, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.25);
+  transform: translateX(-105%);
+  visibility: hidden;
+  transition: transform 0.25s ease, visibility 0s 0.25s;
+
+  &.open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.25s ease;
+  }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.drawer-logo {
+  height: 40px;
+}
+
+.drawer-title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.drawer-intro {
+  color: #333;
+}
+
+.drawer-links {
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0;
+  border-top: 1px solid #eee;
+
+  a {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+.drawer-pages {
+  margin-top: 8px;
+
+  a {
+    color: #333 !important;
+
+    &.current {
+      font-weight: 700;
+    }
+  }
+}
+
+.drawer-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 0.9em;
+}
+
+.drawer-lang {
+  display: inline-flex;
+  gap: 4px;
+
+  a {
+    padding: 2px 8px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+
+    &.current {
+      border-color: $accent;
+      background: $accent;
+      color: #fff !important;
+    }
   }
 }

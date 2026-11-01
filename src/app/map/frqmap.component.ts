@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, Inject, LOCALE_ID, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import sampleResponseToReq1, {
   Filter,
@@ -39,17 +39,21 @@ const baseUrl : String = "/api"
 const baseMapCapabilities: string = "assets/WMTSCapabilities.xml";
 const parser = new WMTSCapabilities();
 
-/** Austria-wide extent (EPSG:3857) used as the initial view. */
-const AUSTRIA_EXTENT: Extent = [908071, 5751733, 2047289, 6375459];
+/** Tight bounding box of Austria (EPSG:3857), from its westernmost point near the
+ *  Bodensee (9.53°E) to the Hungarian border (17.16°E), 46.37°N to 49.02°N. The
+ *  initial view is fitted to it. */
+const AUSTRIA_EXTENT: Extent = olProj.transformExtent([9.53, 46.37, 17.16, 49.02], 'EPSG:4326', 'EPSG:3857');
 /** Min viewport width (UIkit `@m`) treated as desktop: details float as a card on
  *  the right. Below it they are a bottom sheet. Keep in sync with the SCSS. */
 const DESKTOP_BREAKPOINT = 960;
 /** Width of the desktop details card incl. its margin (px), see .mdetails. */
 const DETAILS_CARD_WIDTH = 420;
-/** Height of the floating top bar incl. margin (px), kept clear when fitting. */
-const TOP_BAR_HEIGHT = 64;
-/** Portrait screens: share of the height (below the top bar) Austria fills initially. */
-const PORTRAIT_FILL = 0.6;
+/** Height of the floating navigation + filter bar incl. margins (px), kept clear
+ *  when fitting. See .app-nav (app.component.scss) and .mbar. */
+const TOP_BAR_HEIGHT = 120;
+/** Mobile: share of Austria visible initially - zoomed in slightly further than
+ *  a full fit, so the edges are cut off on purpose. */
+const MOBILE_VISIBLE_SHARE = 0.9;
 /** localStorage key remembering that the "tap a repeater" hint was dismissed. */
 const HINT_DISMISSED_KEY = 'frqmap.hintDismissed';
 
@@ -196,7 +200,6 @@ export class FrqmapComponent implements OnInit {
   filterName: String;
 
   // Floating UI state (see frqmap.component.html).
-  drawerOpen = false;
   filtersOpen = false;
   detailsCollapsed = false;
   showHint = !readHintDismissed();
@@ -212,18 +215,34 @@ export class FrqmapComponent implements OnInit {
   // looked up by site name and recoloured (selection / live status).
   private siteVectorSource: VectorSource<any> | null = null;
 
+  @ViewChild('nameInput') private nameInput?: ElementRef<HTMLInputElement>;
+
   constructor(
     private http : HttpClient,
-    private statusService : RepeaterStatusService,
-    @Inject(LOCALE_ID) public locale: string
+    private statusService : RepeaterStatusService
   ) { }
 
   get hasDetails(): boolean {
     return !!this.selectedSite || !!this.pointInfo;
   }
 
+  /** Any filter differs from its default (offers "Reset filters"). */
   get filtersActive(): boolean {
-    return (this.defaultType !== null && this.selectedType !== this.defaultType) || !!this.filterFrequency;
+    return (this.defaultType !== null && this.selectedType !== this.defaultType)
+      || !!this.filterFrequency || !!this.filterName;
+  }
+
+  /** The name / call sign filter is folded away but set: dot on the funnel. */
+  get nameFilterActive(): boolean {
+    return !!this.filterName;
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen = !this.filtersOpen;
+    if (this.filtersOpen) {
+      // The input only exists after the next change detection.
+      setTimeout(() => this.nameInput?.nativeElement.focus());
+    }
   }
 
   resetFilters(): void {
@@ -231,6 +250,7 @@ export class FrqmapComponent implements OnInit {
       this.selectedType = this.defaultType;
     }
     this.filterFrequency = '';
+    this.filterName = '';
     this.loadSites();
   }
 
@@ -245,9 +265,7 @@ export class FrqmapComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.drawerOpen) {
-      this.drawerOpen = false;
-    } else if (this.filtersOpen) {
+    if (this.filtersOpen) {
       this.filtersOpen = false;
     } else if (this.hasDetails) {
       this.closeDetails();
@@ -393,22 +411,22 @@ export class FrqmapComponent implements OnInit {
     }, 100);
   }
 
-  /** Fits Austria into the viewport, keeping it clear of the floating top bar.
-   *  On portrait screens a full fit leaves Austria as a thin strip, so zoom in
-   *  until it fills PORTRAIT_FILL of the height, accepting that the west and
-   *  east get cut off. */
+  /** Fits Austria to fill the map: on wide screens its height spans the whole
+   *  window, on narrower ones its width (the Bodensee may get cut off). The
+   *  floating cards sit in corners Austria barely reaches, so desktop doesn't
+   *  reserve room for them. On mobile the filter bar spans the full width, so the
+   *  fit starts below it and zooms in a bit further (MOBILE_VISIBLE_SHARE). */
   private fitAustria(): void {
     const view = this.map.getView();
     const size = this.map.getSize();
-    view.fit(AUSTRIA_EXTENT, { size, padding: [TOP_BAR_HEIGHT, 8, 8, 8] });
-    if (!size || size[1] <= size[0]) {
+    if (!size) {
       return;
     }
-    const austriaHeight = AUSTRIA_EXTENT[3] - AUSTRIA_EXTENT[1];
-    const portraitResolution = austriaHeight / ((size[1] - TOP_BAR_HEIGHT) * PORTRAIT_FILL);
+    const mobile = size[0] < DESKTOP_BREAKPOINT;
+    view.fit(AUSTRIA_EXTENT, { size, padding: [mobile ? TOP_BAR_HEIGHT : 8, 8, 8, 8] });
     const resolution = view.getResolution();
-    if (resolution && portraitResolution < resolution) {
-      view.setResolution(portraitResolution);
+    if (mobile && resolution) {
+      view.setResolution(resolution * MOBILE_VISIBLE_SHARE);
     }
   }
 
