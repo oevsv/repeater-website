@@ -394,13 +394,16 @@
       <ng-container *ngIf="pointInfo && !selectedSite">
         <p i18n="@@nearbyintro">Oops, there is no repeater where you clicked. But here is a list of nearby sites:
         </p>
-        <div *ngFor="let info of pointInfo">
-          <ul>
-            <li>
-              {{(info.distance) / 1000 | number: '1.1-1'}} km for site {{info.site_name}}
-            </li>
-          </ul>
-        </div>
+        <!-- Picking a site highlights it on the map, linked to the clicked point. -->
+        <ul class="nearby">
+          <li *ngFor="let info of pointInfo" [class.current]="info.site_name === highlightedSite">
+            <button type="button" class="nearby-site" (click)="showNearbySite(info)">{{info.site_name}}</button>
+            <span class="nearby-distance">{{(info.distance) / 1000 | number: '1.1-1'}} km</span>
+            <button *ngIf="info.site_name === highlightedSite && isSiteOnMap(info.site_name)" type="button"
+                    class="uk-button uk-button-default uk-button-small nearby-details"
+                    (click)="openNearbySite(info)" i18n="@@radios">Details</button>
+          </li>
+        </ul>
       </ng-container>
     </div>
   </section>

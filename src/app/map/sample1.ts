@@ -36,6 +36,9 @@ response to https://repeater.oevsv.at/api/rpc/geo?x=14.832389785258355&y=48.7310
 export interface PointInformation {
  distance: number;
  site_name: string;
+ /** WGS84 position of the site; optional until /rpc/geo returns it. */
+ longitude?: number;
+ latitude?: number;
 }
 
 export interface TrxInformation {

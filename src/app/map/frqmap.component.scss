@@ -350,6 +350,56 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
   }
 }
 
+/* --- nearby sites list ------------------------------------------------ */
+
+.nearby {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+
+    &.current {
+      background: rgba(21, 101, 192, 0.08); // matches the blue line / selected disc
+    }
+  }
+}
+
+.nearby-site {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: $accent;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+
+  .current & {
+    color: #1565c0;
+    font-weight: 700;
+  }
+}
+
+.nearby-distance {
+  flex: none;
+  color: $muted;
+  white-space: nowrap;
+}
+
+.nearby-details {
+  flex: none;
+  text-transform: none;
+}
+
 /* --- details content (unchanged tables) --------------------------------- */
 
 .valueColumn {

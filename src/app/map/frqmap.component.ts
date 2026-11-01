@@ -17,7 +17,7 @@ import WMTSGrid from "ol/tilegrid/WMTS";
 import OSM from 'ol/source/OSM';
 import WMTSSource, {optionsFromCapabilities} from 'ol/source/WMTS'
 import * as olProj from "ol/proj";
-import {Extent} from "ol/extent";
+import {Extent, boundingExtent} from "ol/extent";
 import {HttpClient} from "@angular/common/http";
 import {Source, XYZ} from "ol/source";
 import {Coordinate} from "ol/coordinate";
@@ -29,7 +29,7 @@ import WMTSCapabilities from 'ol/format/WMTSCapabilities';
 import {Fill, Icon, Stroke, Style} from "ol/style";
 import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
-import {Point} from "ol/geom";
+import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
 import { RepeaterStatusService } from './repeater-status.service';
 
@@ -77,6 +77,12 @@ function locationPin(fill: string): Style {
 const CLICK_MARKER_STYLE = locationPin('#d32f2f');
 /** Blue pin: dropped at the user's GPS position by the "locate" button. */
 const LOCATE_MARKER_STYLE = locationPin('#1565c0');
+/** Blue line from the clicked / located point to a repeater picked from the
+ *  nearby list, with a white casing so it stands out on the grey basemap. */
+const LINK_STYLE = [
+  new Style({ stroke: new Stroke({ color: '#ffffff', width: 6 }) }),
+  new Style({ stroke: new Stroke({ color: '#1565c0', width: 3 }) }),
+];
 /* --- Repeater marker -------------------------------------------------------
  * A repeater is drawn as a transmitter-tower icon with three independently
  * colourable elements:
@@ -214,6 +220,13 @@ export class FrqmapComponent implements OnInit {
   // Vector source holding the repeater markers, so individual markers can be
   // looked up by site name and recoloured (selection / live status).
   private siteVectorSource: VectorSource<any> | null = null;
+  // Line from the location pin to the repeater picked in the nearby list (plus a
+  // stand-in marker if that repeater is hidden by the current filter). Drawn
+  // below the repeater markers, above the basemap.
+  private readonly linkSource: VectorSource<any> = new VectorSource();
+  private linkLayer: VectorLayer<VectorSource<any>> | null = null;
+  /** Repeater picked in the nearby list (highlighted there and on the map). */
+  highlightedSite: string | null = null;
 
   @ViewChild('nameInput') private nameInput?: ElementRef<HTMLInputElement>;
 
@@ -377,22 +390,14 @@ export class FrqmapComponent implements OnInit {
         //reset old, if any
         this.deselectRepeater(this.selectedFeature);
       }
+      this.clearLink();
 
       if (siteFeature) {
         // Case A: clicked a repeater - select it (blue disc) and clear any location pin.
         this.selectedFeature = siteFeature;
         this.selectRepeater(this.selectedFeature);
-        this.selectedSite = (siteFeature as Feature<any>).getProperties().site;
-        if (this.selectedSite) {
-          let siteName = this.selectedSite.site_name;
-          // replace spaces and slash
-          let siteUrl = 'https://repeater.oevsv.at/tiles/' + siteName.replaceAll(' ', '-').replaceAll('/', '_');
-          this.pointInfo = null;
-          this.clearLocationMarker();
-          this.loadInformationForSite(siteName)
-          this.changeOverlaySource(siteUrl)
-          this.onDetailsOpened(e.coordinate)
-        }
+        this.clearLocationMarker();
+        this.openSite((siteFeature as Feature<any>).getProperties().site, e.coordinate);
       } else {
         // Case B: clicked a non-repeater location (including an existing red/blue
         // pin - which gets replaced). Drop a red pin, grow the panel and show the
@@ -657,7 +662,8 @@ export class FrqmapComponent implements OnInit {
       });
       this.siteVectorSource = vectorSource;
       const vectorLayer = new VectorLayer({
-        source: vectorSource
+        source: vectorSource,
+        zIndex: 2 // above the coverage overlay and the nearby-list line
       });
       this.map.set('name','icons')
       this.map.getLayers().insertAt(1, vectorLayer)
@@ -873,12 +879,124 @@ export class FrqmapComponent implements OnInit {
 
 
 
+  /** Shows a site's details (radios, coverage overlay) in the panel. */
+  private openSite(site: Site | null, coordinate: Coordinate): void {
+    this.selectedSite = site;
+    if (!site) {
+      return;
+    }
+    const siteName = site.site_name;
+    // replace spaces and slash
+    const siteUrl = 'https://repeater.oevsv.at/tiles/' + siteName.replaceAll(' ', '-').replaceAll('/', '_');
+    this.pointInfo = null;
+    this.loadInformationForSite(siteName);
+    this.changeOverlaySource(siteUrl);
+    this.onDetailsOpened(coordinate);
+  }
+
+  /** Nearby list: highlights the repeater on the map, draws a blue line to it from
+   *  the clicked / located point and zooms so both are visible next to the panel. */
+  showNearbySite(info: PointInformation): void {
+    if (this.selectedFeature) {
+      this.deselectRepeater(this.selectedFeature);
+    }
+    this.clearLink();
+    this.highlightedSite = info.site_name;
+
+    const feature = this.siteVectorSource?.getFeatureById(info.site_name) as Feature<any> | null;
+    if (feature) {
+      this.selectedFeature = feature;
+      this.selectRepeater(feature);
+      this.linkTo((feature.getGeometry() as Point).getCoordinates(), false);
+    } else if (info.longitude != null && info.latitude != null) {
+      // Not on the map (filtered out); the backend sent its position.
+      this.linkTo(olProj.fromLonLat([info.longitude, info.latitude]), true);
+    } else {
+      // Not on the map and no position in the response: look the site up.
+      const url = `${baseUrl}/site_type?site_name=eq.${encodeURIComponent(info.site_name)}`;
+      this.http.get<Site[]>(url).subscribe((sites) => {
+        if (sites.length > 0 && this.highlightedSite === info.site_name) {
+          this.linkTo(olProj.fromLonLat([sites[0]['longitude'], sites[0]['latitude']]), true);
+        }
+      });
+    }
+  }
+
+  /** Whether a nearby site is drawn on the map (i.e. not hidden by the filter),
+   *  so its details can be opened like a click on its marker. */
+  isSiteOnMap(siteName: string): boolean {
+    return !!this.siteVectorSource?.getFeatureById(siteName);
+  }
+
+  /** Nearby list: opens the details of the highlighted repeater, keeping the
+   *  location pin and the line. */
+  openNearbySite(info: PointInformation): void {
+    const feature = this.siteVectorSource?.getFeatureById(info.site_name) as Feature<any> | null;
+    if (feature) {
+      this.openSite(feature.get('site'), (feature.getGeometry() as Point).getCoordinates());
+    }
+  }
+
+  /** Draws the line from the location pin to `siteCoordinate` and fits both into
+   *  the part of the map not covered by the panel. `standIn` adds a selected
+   *  repeater marker for a site that is not drawn on the map. */
+  private linkTo(siteCoordinate: Coordinate, standIn: boolean): void {
+    if (!this.linkLayer) {
+      this.linkLayer = new VectorLayer({ source: this.linkSource, zIndex: 1 });
+      this.map.addLayer(this.linkLayer);
+    }
+    if (standIn) {
+      const marker = new Feature(new Point(siteCoordinate));
+      marker.setStyle(repeaterStyle(REPEATER_BG_SELECTED, TOWER_DEFAULT, TRANSMISSION_DEFAULT));
+      this.linkSource.addFeature(marker);
+    }
+    const from = (this.locationMarkerFeature?.getGeometry() as Point | undefined)?.getCoordinates();
+    if (!from) {
+      this.fitCoordinates([siteCoordinate]);
+      return;
+    }
+    const line = new Feature(new LineString([from, siteCoordinate]));
+    line.setStyle(LINK_STYLE);
+    this.linkSource.addFeature(line);
+    this.fitCoordinates([from, siteCoordinate]);
+  }
+
+  /** Zooms / pans so all coordinates are visible in the area left free by the top
+   *  bar and the details panel (right card on desktop, bottom sheet on mobile). */
+  private fitCoordinates(coordinates: Coordinate[]): void {
+    const size = this.map.getSize();
+    if (!size) {
+      return;
+    }
+    const margin = 64;
+    let padding: number[];
+    if (size[0] >= DESKTOP_BREAKPOINT) {
+      padding = [TOP_BAR_HEIGHT + margin, DETAILS_CARD_WIDTH + margin, margin, margin];
+    } else {
+      const sheet = document.querySelector('.mdetails') as HTMLElement | null;
+      const sheetHeight = sheet ? sheet.offsetHeight : size[1] * 0.6;
+      padding = [TOP_BAR_HEIGHT + margin, margin, sheetHeight + margin, margin];
+    }
+    this.map.getView().fit(boundingExtent(coordinates), {
+      size,
+      padding,
+      maxZoom: 14, // two nearby points would otherwise zoom in to street level
+      duration: 400,
+    });
+  }
+
+  private clearLink(): void {
+    this.linkSource.clear();
+    this.highlightedSite = null;
+  }
+
   /** Closes the details panel: the selected site marker reverts to its normal
    *  colour and its tile overlay is removed. */
   closeDetails(): void {
     if (this.selectedFeature) {
       this.deselectRepeater(this.selectedFeature);
     }
+    this.clearLink();
     this.selectedSite = null;
     this.trxInfo = null;
     this.pointInfo = null;
@@ -963,6 +1081,7 @@ export class FrqmapComponent implements OnInit {
     if (this.selectedFeature) {
       this.deselectRepeater(this.selectedFeature);
     }
+    this.clearLink();
     this.selectedSite = null;
     this.removeOverlaySource();
     this.showLocationMarker(coordinate, LOCATE_MARKER_STYLE);
