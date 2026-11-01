@@ -100,22 +100,8 @@
           <context context-type="linenumber">52</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="introtext_details1" datatype="html">
-        <source> Klicken Sie auf einen Repeater um weitere Informationen zu erhalten.<x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/> Eine interaktive Tabelle aller Repeater findet sich </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">54</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="introtext_details1a" datatype="html">
-        <source>hier</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">54</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="introtext_details2" datatype="html">
-        <source>Zusätzliche Informationen wie ausdruckbare Karten, Codeplugs und Open Data finden Sie</source>
+        <source>Zusätzliche Informationen wie ausdruckbare Karten, Codeplugs und Open Data finden Sie </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">56</context>
@@ -136,7 +122,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details5" datatype="html">
-        <source>Bitte schicken Sie Ihr Feedback/Updates an</source>
+        <source>Bitte schicken Sie Ihr Feedback/Updates an </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">62</context>
@@ -630,6 +616,54 @@
           <context context-type="sourcefile">src/app/app.component.html</context>
           <context context-type="linenumber">128</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="mapMenu" datatype="html">
+        <source>Menü</source>
+      </trans-unit>
+      <trans-unit id="searchPlaceholder" datatype="html">
+        <source>Name oder Rufzeichen</source>
+      </trans-unit>
+      <trans-unit id="mapFilters" datatype="html">
+        <source>Filter</source>
+      </trans-unit>
+      <trans-unit id="resetFilters" datatype="html">
+        <source>Filter zurücksetzen</source>
+      </trans-unit>
+      <trans-unit id="mapHint" datatype="html">
+        <source>Tippe auf einen Repeater für Details</source>
+      </trans-unit>
+      <trans-unit id="mapToggleDetails" datatype="html">
+        <source>Ein-/Ausklappen</source>
+      </trans-unit>
+      <trans-unit id="authLogin" datatype="html">
+        <source>Anmelden</source>
+      </trans-unit>
+      <trans-unit id="authCallsign" datatype="html">
+        <source>Rufzeichen</source>
+      </trans-unit>
+      <trans-unit id="authEmail" datatype="html">
+        <source>E-Mail</source>
+      </trans-unit>
+      <trans-unit id="authSubject" datatype="html">
+        <source>ID</source>
+      </trans-unit>
+      <trans-unit id="authVerified" datatype="html">
+        <source>bestätigt</source>
+      </trans-unit>
+      <trans-unit id="authLogout" datatype="html">
+        <source>Abmelden</source>
+      </trans-unit>
+      <trans-unit id="navMap" datatype="html">
+        <source>Karte</source>
+      </trans-unit>
+      <trans-unit id="navList" datatype="html">
+        <source>Liste</source>
+      </trans-unit>
+      <trans-unit id="frequencyPlaceholder" datatype="html">
+        <source>Frequenz</source>
+      </trans-unit>
+      <trans-unit id="repeaterType" datatype="html">
+        <source>Repeatertyp</source>
       </trans-unit>
     </body>
   </file>

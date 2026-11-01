@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import sampleResponseToReq1, {
   Filter,
@@ -39,12 +39,23 @@ const baseUrl : String = "/api"
 const baseMapCapabilities: string = "assets/WMTSCapabilities.xml";
 const parser = new WMTSCapabilities();
 
-/** Austria-wide extent (EPSG:3857) used as the initial view. */
-const AUSTRIA_EXTENT: Extent = [908071, 5751733, 2047289, 6375459];
-/** Min viewport width (UIkit `@m`) treated as desktop. */
+/** Tight bounding box of Austria (EPSG:3857), from its westernmost point near the
+ *  Bodensee (9.53°E) to the Hungarian border (17.16°E), 46.37°N to 49.02°N. The
+ *  initial view is fitted to it. */
+const AUSTRIA_EXTENT: Extent = olProj.transformExtent([9.53, 46.37, 17.16, 49.02], 'EPSG:4326', 'EPSG:3857');
+/** Min viewport width (UIkit `@m`) treated as desktop: details float as a card on
+ *  the right. Below it they are a bottom sheet. Keep in sync with the SCSS. */
 const DESKTOP_BREAKPOINT = 960;
-/** On desktop the initial view starts 20% more zoomed in than the full-country fit. */
-const DESKTOP_INITIAL_ZOOM_FACTOR = 1.2;
+/** Width of the desktop details card incl. its margin (px), see .mdetails. */
+const DETAILS_CARD_WIDTH = 420;
+/** Height of the floating navigation + filter bar incl. margins (px), kept clear
+ *  when fitting. See .app-nav (app.component.scss) and .mbar. */
+const TOP_BAR_HEIGHT = 120;
+/** Mobile: share of Austria visible initially - zoomed in slightly further than
+ *  a full fit, so the edges are cut off on purpose. */
+const MOBILE_VISIBLE_SHARE = 0.9;
+/** localStorage key remembering that the "tap a repeater" hint was dismissed. */
+const HINT_DISMISSED_KEY = 'frqmap.hintDismissed';
 
 /** Teardrop pin marking a clicked / located point. A pin shape keeps it distinct
  *  from the round repeater dots (which turn green/red on selection). */
@@ -188,6 +199,13 @@ export class FrqmapComponent implements OnInit {
   filterFrequency: String;
   filterName: String;
 
+  // Floating UI state (see frqmap.component.html).
+  filtersOpen = false;
+  detailsCollapsed = false;
+  showHint = !readHintDismissed();
+  /** Repeater type selected by default (from /settings), to detect active filters. */
+  private defaultType: String | null = null;
+
   // Single marker for the clicked / located point (red pin for map clicks,
   // blue pin for the locate button). Distinct from the round repeater dots.
   private readonly clickMarkerSource: VectorSource<any> = new VectorSource();
@@ -197,10 +215,62 @@ export class FrqmapComponent implements OnInit {
   // looked up by site name and recoloured (selection / live status).
   private siteVectorSource: VectorSource<any> | null = null;
 
+  @ViewChild('nameInput') private nameInput?: ElementRef<HTMLInputElement>;
+
   constructor(
     private http : HttpClient,
     private statusService : RepeaterStatusService
   ) { }
+
+  get hasDetails(): boolean {
+    return !!this.selectedSite || !!this.pointInfo;
+  }
+
+  /** Any filter differs from its default (offers "Reset filters"). */
+  get filtersActive(): boolean {
+    return (this.defaultType !== null && this.selectedType !== this.defaultType)
+      || !!this.filterFrequency || !!this.filterName;
+  }
+
+  /** The name / call sign filter is folded away but set: dot on the funnel. */
+  get nameFilterActive(): boolean {
+    return !!this.filterName;
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen = !this.filtersOpen;
+    if (this.filtersOpen) {
+      // The input only exists after the next change detection.
+      setTimeout(() => this.nameInput?.nativeElement.focus());
+    }
+  }
+
+  resetFilters(): void {
+    if (this.defaultType !== null) {
+      this.selectedType = this.defaultType;
+    }
+    this.filterFrequency = '';
+    this.filterName = '';
+    this.loadSites();
+  }
+
+  dismissHint(): void {
+    this.showHint = false;
+    try {
+      localStorage.setItem(HINT_DISMISSED_KEY, '1');
+    } catch {
+      // storage unavailable (private mode etc.) - the hint just comes back next time
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.filtersOpen) {
+      this.filtersOpen = false;
+    } else if (this.hasDetails) {
+      this.closeDetails();
+    }
+  }
 
   ngOnInit(): void {
     console.log("init")
@@ -236,23 +306,38 @@ export class FrqmapComponent implements OnInit {
       observe: 'body',
       responseType: 'text'
     })
-      .subscribe((text) => {
-        const result = parser.read(text);
-        const options = optionsFromCapabilities(result, {
-          layer: 'bmaphidpi',
-          matrixSet: 'google3857'
-        })!
-        options.attributions = 'Grundkarte &copy; <a href="//www.basemap.at/">' +
-          'basemap.at</a>, Repeaterdaten CC-BY4.0.'
+      .subscribe({
+        next: (text) => {
+          try {
+            const result = parser.read(text);
+            const options = optionsFromCapabilities(result, {
+              layer: 'bmaphidpi',
+              matrixSet: 'google3857'
+            });
+            // optionsFromCapabilities returns null if the layer/matrixSet is not
+            // found (e.g. the request returned HTML, not the capabilities XML).
+            if (!options) {
+              throw new Error('optionsFromCapabilities returned null (capabilities not parsed as expected)');
+            }
+            options.attributions = 'Grundkarte &copy; <a href="//www.basemap.at/">' +
+              'basemap.at</a>, Repeaterdaten CC-BY4.0.'
 
-        const layer = new TileLayer({
-          source: new WMTSSource(options!),
-          opacity: 1,
-          visible: true
-        })
-        this.desaturate(layer);
-        this.map.getLayers().insertAt(0, layer)
-        //this.map.addLayer(layer);
+            const layer = new TileLayer({
+              source: new WMTSSource(options),
+              opacity: 1,
+              visible: true
+            })
+            this.desaturate(layer);
+            this.map.getLayers().insertAt(0, layer)
+          } catch (err) {
+            console.error('basemap: failed to build WMTS layer from capabilities, falling back to OSM', err);
+            this.addFallbackBasemap();
+          }
+        },
+        error: (err) => {
+          console.error('basemap: failed to load WMTS capabilities, falling back to OSM', err);
+          this.addFallbackBasemap();
+        }
       });
 
     // change mouse cursor when over marker
@@ -261,7 +346,10 @@ export class FrqmapComponent implements OnInit {
       const pixel = that.map.getEventPixel(e.originalEvent);
       const hit = that.map.hasFeatureAtPixel(pixel);
 
-      that.map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+      const target = that.map.getTargetElement();
+      if (target) {
+        target.style.cursor = hit ? 'pointer' : '';
+      }
     });
 
     this.dumpSiteInfosForFiltering();
@@ -301,7 +389,7 @@ export class FrqmapComponent implements OnInit {
           this.clearLocationMarker();
           this.loadInformationForSite(siteName)
           this.changeOverlaySource(siteUrl)
-          this.scheduleMapResize()
+          this.onDetailsOpened(e.coordinate)
         }
       } else {
         // Case B: clicked a non-repeater location (including an existing red/blue
@@ -311,33 +399,104 @@ export class FrqmapComponent implements OnInit {
         this.showLocationMarker(e.coordinate, CLICK_MARKER_STYLE);
         this.loadInformationForPoint(coordsWgs84);
         this.removeOverlaySource();
-        this.scheduleMapResize();
+        this.onDetailsOpened(e.coordinate);
       }
     })
 
-    // The container is often still laying out right after creation, so the first
-    // fit used a stale size; re-fit once it has its real size so Austria fills the
-    // map instead of sitting in a band of empty space.
-    let timeouts = [100, 300, 1000, 3000]
-    timeouts.forEach(to => {
-      setTimeout(() => {
-        this.map.updateSize();
-        this.fitAustria();
-      }, to);
-    })
+    // The map fills the (fixed) viewport, so its size is known almost at once;
+    // re-fit once after the first layout in case the target was created at 0x0.
+    setTimeout(() => {
+      this.map.updateSize();
+      this.fitAustria();
+    }, 100);
   }
 
-  /** Fits the Austria-wide extent to the current map size. On desktop the view
-   *  then zooms in 20% so it starts a bit closer than the full-country overview. */
+  /** Fits Austria to fill the map: on wide screens its height spans the whole
+   *  window, on narrower ones its width (the Bodensee may get cut off). The
+   *  floating cards sit in corners Austria barely reaches, so desktop doesn't
+   *  reserve room for them. On mobile the filter bar spans the full width, so the
+   *  fit starts below it and zooms in a bit further (MOBILE_VISIBLE_SHARE). */
   private fitAustria(): void {
     const view = this.map.getView();
-    view.fit(AUSTRIA_EXTENT, { size: this.map.getSize() });
-    if (window.innerWidth >= DESKTOP_BREAKPOINT) {
-      const resolution = view.getResolution();
-      if (resolution) {
-        view.setResolution(resolution / DESKTOP_INITIAL_ZOOM_FACTOR);
-      }
+    const size = this.map.getSize();
+    if (!size) {
+      return;
     }
+    const mobile = size[0] < DESKTOP_BREAKPOINT;
+    view.fit(AUSTRIA_EXTENT, { size, padding: [mobile ? TOP_BAR_HEIGHT : 8, 8, 8, 8] });
+    const resolution = view.getResolution();
+    if (mobile && resolution) {
+      view.setResolution(resolution * MOBILE_VISIBLE_SHARE);
+    }
+  }
+
+  /** A repeater or location was clicked: show the details expanded, retire the
+   *  hint and make sure the clicked point is not hidden under the panel. */
+  private onDetailsOpened(coordinate: Coordinate): void {
+    this.detailsCollapsed = false;
+    this.filtersOpen = false;
+    if (this.showHint) {
+      this.dismissHint();
+    }
+    this.revealCoordinate(coordinate);
+  }
+
+  /** Pans the map just enough that `coordinate` sits in the part of the screen not
+   *  covered by the details panel (right card on desktop, bottom sheet on mobile). */
+  private revealCoordinate(coordinate: Coordinate): void {
+    const size = this.map.getSize();
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    if (!size || !pixel) {
+      return;
+    }
+    const [width, height] = size;
+    let target: number[];
+    if (width >= DESKTOP_BREAKPOINT) {
+      const freeWidth = width - DETAILS_CARD_WIDTH;
+      if (pixel[0] <= freeWidth - 40) {
+        return;
+      }
+      target = [freeWidth / 2, pixel[1]];
+    } else {
+      // The sheet covers up to ~60% of the height; aim for the middle of the rest.
+      const freeHeight = height * 0.4;
+      if (pixel[1] >= TOP_BAR_HEIGHT && pixel[1] <= freeHeight) {
+        return;
+      }
+      target = [pixel[0], TOP_BAR_HEIGHT + (freeHeight - TOP_BAR_HEIGHT) / 2];
+    }
+    const view = this.map.getView();
+    const center = view.getCenter();
+    const resolution = view.getResolution();
+    if (!center || !resolution) {
+      return;
+    }
+    // Map y grows northwards while pixel y grows downwards.
+    view.animate({
+      center: [
+        center[0] + (pixel[0] - target[0]) * resolution,
+        center[1] - (pixel[1] - target[1]) * resolution,
+      ],
+      duration: 300,
+    });
+  }
+
+  /** Fallback basemap (desaturated OSM) used when the basemap.at WMTS cannot be
+   *  loaded, so the map never renders without a background layer. */
+  private addFallbackBasemap(): void {
+    // Guard against adding it twice (e.g. error + a retry).
+    if (this.map.getLayers().getLength() > 0 &&
+        (this.map.getLayers().item(0) as TileLayer<TileSource>)?.get('isBasemap')) {
+      return;
+    }
+    const layer = new TileLayer({
+      source: new OSM(),
+      opacity: 1,
+      visible: true
+    });
+    layer.set('isBasemap', true);
+    this.desaturate(layer);
+    this.map.getLayers().insertAt(0, layer);
   }
 
   /** Renders a layer in grey tones only (the basemap.at tiles are coloured); the
@@ -379,6 +538,7 @@ export class FrqmapComponent implements OnInit {
         }
         if (defaultType) {
           this.selectedType = defaultType.type;
+          this.defaultType = defaultType.type;
           console.log("Selected type set to ", this.selectedType);
         }
           //synchronize selectedTypeLabel
@@ -711,9 +871,8 @@ export class FrqmapComponent implements OnInit {
 
 
 
-  /** Closes the info panel: the right column animates back to 1/5 with the intro
-   *  text, the selected site marker reverts to its normal colour, and its tile
-   *  overlay is removed. */
+  /** Closes the details panel: the selected site marker reverts to its normal
+   *  colour and its tile overlay is removed. */
   closeDetails(): void {
     if (this.selectedFeature) {
       this.deselectRepeater(this.selectedFeature);
@@ -722,14 +881,6 @@ export class FrqmapComponent implements OnInit {
     this.trxInfo = null;
     this.pointInfo = null;
     this.removeOverlaySource();
-    this.scheduleMapResize();
-  }
-
-  /** Keeps the OpenLayers canvas in sync with the panel's width animation. */
-  private scheduleMapResize(): void {
-    for (const delay of [0, 100, 200, 300, 400, 500]) {
-      setTimeout(() => this.map.updateSize(), delay);
-    }
   }
 
   /** Drops/replaces the single location pin at the given coordinate (EPSG:3857)
@@ -814,7 +965,7 @@ export class FrqmapComponent implements OnInit {
     this.removeOverlaySource();
     this.showLocationMarker(coordinate, LOCATE_MARKER_STYLE);
     this.loadInformationForPoint(lonLat);
-    this.scheduleMapResize();
+    this.detailsCollapsed = false;
   }
 
   convertDMS(dd: number): string {
@@ -828,6 +979,14 @@ export class FrqmapComponent implements OnInit {
 
 
 
+}
+
+function readHintDismissed(): boolean {
+  try {
+    return localStorage.getItem(HINT_DISMISSED_KEY) === '1';
+  } catch {
+    return false;
+  }
 }
 
 /** "Locate me" crosshair, inlined so the control is self-contained. Uses
