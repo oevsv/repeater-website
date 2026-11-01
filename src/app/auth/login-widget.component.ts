@@ -17,7 +17,7 @@ interface Me {
 /**
  * Top-right login indicator.
  *
- * Asks the server-side auth prototype (GET /me) who — if anyone — is logged in.
+ * Asks the server-side login service (GET /me) who — if anyone — is logged in.
  * No tokens live in the browser: /me returns only display-safe claims, and the
  * session is carried by the HttpOnly cookie the browser sends automatically.
  *

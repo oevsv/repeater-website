@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /*
- * OIDC Authorization Code + PKCE prototype for repeater.oevsv.at
+ * Login service for repeater.oevsv.at (OIDC Authorization Code + PKCE)
  * ----------------------------------------------------------------
  * A tiny, zero-dependency Node server (Node >= 20) that handles the
  * server-side half of the login flow for the CONFIDENTIAL Keycloak client
@@ -395,7 +395,7 @@ async function handleAuthorized(req, res, query) {
     return page(res, 502, 'Login failed', `<p class="err">id_token verification failed: ${esc(e.message)}</p>`);
   }
 
-  // Minimal prototype session: store a few claims + the id_token (for logout hint).
+  // Session: a few display claims + the id_token (for the logout hint).
   const session = {
     sub: claims.sub,
     name: claims.name,
@@ -501,7 +501,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(cfg.port, '127.0.0.1', () => {
-  console.log(`auth-prototype listening on http://127.0.0.1:${cfg.port}`);
+  console.log(`repeater-auth listening on http://127.0.0.1:${cfg.port}`);
   console.log(`  issuer       ${cfg.issuer}`);
   console.log(`  client_id    ${cfg.clientId}`);
   console.log(`  redirect_uri ${cfg.redirectUri}`);

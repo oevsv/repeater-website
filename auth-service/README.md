@@ -1,4 +1,4 @@
-# Auth prototype — OpenID Connect login for repeater.oevsv.at
+# Login service — OpenID Connect login for repeater.oevsv.at
 
 A tiny, **zero-dependency** Node server (Node ≥ 20) that implements the
 server-side half of an OpenID Connect **Authorization Code + PKCE** login against
@@ -45,8 +45,11 @@ that server; the Angular SPA is untouched.
   display claims, not tokens.
 - The `id_token` signature is verified (RS256/PS\*) against the realm JWKS, plus
   `iss` / `aud` / `exp` / `nonce` checks.
-- Session is a signed, `HttpOnly`, `SameSite=Lax`, `Secure` cookie (this is a
-  prototype — for production prefer a server-side session store).
+- Session is a signed, `HttpOnly`, `SameSite=Lax`, `Secure` cookie, valid for one
+  hour. It is signed, not encrypted: it carries the display claims and the
+  `id_token` (for the logout hint), which the user can decode but not alter. A
+  server-side session store would keep that data off the client and allow
+  revoking a session before it expires.
 - The JWT minted for PostgREST is **short-lived** (`PGRST_TOKEN_TTL`, default
   30 s) and freshly signed per request, so a leaked token is useless almost
   immediately.
@@ -60,7 +63,7 @@ The full browser flow needs the real redirect URI `https://repeater.oevsv.at/aut
 testing mostly exercises `/login` building the redirect. Still useful:
 
 ```bash
-cd auth-prototype
+cd auth-service
 cp .env.example .env         # then edit .env, set OIDC_CLIENT_SECRET + COOKIE_SECRET
 export COOKIE_SECURE=false   # cookies over http for local testing
 set -a; . ./.env; set +a
@@ -112,12 +115,12 @@ line, never in the repo):
 ```ini
 # /etc/systemd/system/repeater-auth.service
 [Unit]
-Description=repeater.oevsv.at OIDC auth prototype
+Description=repeater.oevsv.at login service (OpenID Connect)
 After=network.target
 
 [Service]
 # Point this at wherever the repo is deployed on the server:
-WorkingDirectory=/var/www/repeater/auth-prototype
+WorkingDirectory=/var/www/repeater/auth-service
 ExecStart=/usr/bin/node server.js
 EnvironmentFile=/etc/repeater-auth.env
 Environment=PORT=8780
@@ -145,7 +148,7 @@ Add these location blocks (the exact-match ones always win over the `/de/`
 generic `/api/`). See `../nginx-rewrite.md` for the full server block.
 
 ```nginx
-    # --- OIDC login prototype (proxied to the Node auth service) ---
+    # --- OIDC login (proxied to the Node login service) ---
     location = /login      { proxy_pass http://127.0.0.1:8780; include /etc/nginx/snippets/auth-proxy.conf; }
     location = /authorized { proxy_pass http://127.0.0.1:8780; include /etc/nginx/snippets/auth-proxy.conf; }
     location = /logout     { proxy_pass http://127.0.0.1:8780; include /etc/nginx/snippets/auth-proxy.conf; }
