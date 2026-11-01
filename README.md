@@ -15,7 +15,8 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app w
 
 Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.  
 The individual steps can also be found in the corresponding [GitHub action](https://github.com/oevsv/repeater-website/blob/master/.github/workflows/main.yml). 
-The up-to-date pages can be found in the `build` branch.
+Every pushed branch is built; the output is committed to its own branch: `master` to `gh-pages`,
+any other branch to `gh-pages-<branch>` with `/` replaced by `-` (e.g. `feature/xyz` to `gh-pages-feature-xyz`).
 
 ## Translation
 
