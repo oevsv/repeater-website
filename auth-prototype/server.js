@@ -202,7 +202,10 @@ function mintPgrstToken(session) {
 // /api/secure. A failure never blocks the login - the web page then just shows
 // no "first seen" date - hence the short timeout and null on any error.
 async function recordLogin(session) {
-  if (!cfg.pgrstJwtSecret) return null;
+  if (!cfg.pgrstJwtSecret) {
+    console.warn('user_login skipped: PGRST_JWT_SECRET is not set, logins are not recorded');
+    return null;
+  }
   try {
     const resp = await fetch(cfg.pgrstUpstream.replace(/\/$/, '') + '/rpc/user_login', {
       method: 'POST',
@@ -218,7 +221,9 @@ async function recordLogin(session) {
       console.warn(`user_login: HTTP ${resp.status} ${(await resp.text()).slice(0, 200)}`);
       return null;
     }
-    return await resp.json();
+    const user = await resp.json();
+    console.log(`user_login: ${user.callsign || '(no callsign)'} ${user.id}, first seen ${user.first_seen}`);
+    return user;
   } catch (e) {
     console.warn(`user_login failed: ${e.message}`);
     return null;

@@ -86,8 +86,9 @@ COOKIE_SECRET=<output of: openssl rand -hex 32>
 OIDC_REDIRECT_URI=https://repeater.oevsv.at/authorized
 OIDC_POST_LOGOUT_URI=https://repeater.oevsv.at/
 
-# For the /api/secure -> PostgREST proxy (see the PostgREST section below):
-PGRST_JWT_SECRET=<openssl rand -hex 32 — MUST equal PostgREST's jwt-secret>
+# For the /api/secure -> PostgREST proxy and recording logins (see below):
+# the contents of /etc/postgrest/jwt-secret - MUST equal PostgREST's jwt-secret
+PGRST_JWT_SECRET=<cat /etc/postgrest/jwt-secret>
 # PGRST_UPSTREAM=http://127.0.0.1:3000
 # PGRST_ROLE=web_user
 # PGRST_STRIP_PREFIX=/api/secure   # if PostgREST serves tables at its root
@@ -226,9 +227,12 @@ db-schemas   = "api"
 db-anon-role = "web_anon"
 server-host  = "127.0.0.1"     # localhost only — reachable only via the Node BFF
 server-port  = 3000
-jwt-secret   = "<the SAME value as PGRST_JWT_SECRET>"
+jwt-secret   = "@/etc/postgrest/jwt-secret"   # read from file; same value as PGRST_JWT_SECRET
 # jwt-role-claim-key defaults to ".role" → matches the minted token
 ```
+
+Step by step (creating the secret file, permissions, restart, checks): see
+`repeater-db/README.md`, section "Shared secret for logged-in users (JWT)".
 
 ### Database roles + reading the identity in SQL
 
