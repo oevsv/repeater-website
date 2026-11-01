@@ -52,6 +52,9 @@ export interface PointLocation {
  locator_6: string;
  /** e.g. JN87JT12EA */
  locator_10: string;
+ /** e.g. JN87JT12EA80AA00AA00 (as the sites' locator_long); optional until the
+  *  backend migration 2026-11-01_point_info_locator_20 is applied. */
+ locator_20?: string;
 }
 
 export interface TrxInformation {

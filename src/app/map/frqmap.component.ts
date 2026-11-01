@@ -255,6 +255,12 @@ export class FrqmapComponent implements OnInit {
     private statusService : RepeaterStatusService
   ) { }
 
+  /** Most precise locator of the clicked / located point: 20 characters, or 10
+   *  from a backend without locator_20. */
+  get pointLocator(): string {
+    return this.pointLocation?.locator_20 ?? this.pointLocation?.locator_10 ?? '';
+  }
+
   get hasDetails(): boolean {
     return !!this.selectedSite || !!this.pointInfo || !!this.pointLocation;
   }
