@@ -1,4 +1,4 @@
-np# Amateur radio repeaters
+# Amateur radio repeaters
 
 This website shows Austrian Amateur radio repeaters.
 
@@ -25,11 +25,11 @@ locale files in `/locale` can be generated via `ng extract-i18n --output-path sr
 
 ## Credits
 
-Frontend by Thomas, oe3tsh, backend by Dietmar, oe3dzw. Contact: ukw@oevsv.at.
+Frontend originally by Thomas, oe3tsh, backend by Dietmar, oe3dzw. Contact: ukw@oevsv.at.
 
 ## License
 
-Copyright 2022-2025 Österreichischer Versuchssenderverband (ÖVSV). This source code is licensed under the Apache license found in the LICENSE.txt file. The documentation to the project is licensed under the CC BY 4.0 license.
+Copyright 2022-2026 Österreichischer Versuchssenderverband (ÖVSV). This source code is licensed under the Apache license found in the LICENSE.txt file. The documentation to the project is licensed under the CC BY 4.0 license.
 Trademarks and logos of ÖVSV are not part of this license.
 
 
