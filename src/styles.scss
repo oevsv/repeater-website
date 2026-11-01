@@ -59,8 +59,7 @@
   }
 
   .ol-zoom,
-  .center-user-location,
-  .ol-rotate {
+  .center-user-location {
     top: auto;
     left: auto;
     right: max(8px, env(safe-area-inset-right));
@@ -84,10 +83,6 @@
     }
   }
 
-  .ol-rotate {
-    bottom: calc(var(--ctrl-bottom) + 136px);
-  }
-
   .ol-attribution {
     right: auto;
     left: max(8px, env(safe-area-inset-left));
@@ -106,10 +101,6 @@
   @media (max-width: 639px) {
     .ol-zoom {
       display: none;
-    }
-
-    .ol-rotate {
-      bottom: calc(var(--ctrl-bottom) + 48px);
     }
   }
 }

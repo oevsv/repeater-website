@@ -291,7 +291,9 @@ export class FrqmapComponent implements OnInit {
       ]),
       view: new View({
         center: [0, 0],
-        zoom: 10
+        zoom: 10,
+        // North stays up: a two-finger pinch to zoom would otherwise also rotate.
+        enableRotation: false
       }),
       layers: [],
       target: 'map',
