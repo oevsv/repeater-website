@@ -10,7 +10,8 @@
  *
  * Routes (nginx proxies these three paths to this process):
  *   GET /login       -> redirect to Keycloak, starting the Auth Code + PKCE flow
- *   GET /authorized  -> OAuth callback: exchange code for tokens, show the claims
+ *   GET /authorized  -> OAuth callback: exchange code for tokens, record the
+ *                       login in the database (api.user_login), start the session
  *   GET /logout      -> clear the session and RP-initiated logout at Keycloak
  *
  * Configuration is via environment variables ONLY (see .env.example). No
@@ -195,6 +196,35 @@ function mintPgrstToken(session) {
   return `${data}.${sig}`;
 }
 
+// Records the login in the database: api.user_login() creates / updates the
+// user in the users table (id = sub, callsign, first_seen, last_seen) and
+// returns that row. The user is taken from the minted token, like for
+// /api/secure. A failure never blocks the login - the web page then just shows
+// no "first seen" date - hence the short timeout and null on any error.
+async function recordLogin(session) {
+  if (!cfg.pgrstJwtSecret) return null;
+  try {
+    const resp = await fetch(cfg.pgrstUpstream.replace(/\/$/, '') + '/rpc/user_login', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${mintPgrstToken(session)}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/vnd.pgrst.object+json', // one row as an object
+      },
+      body: '{}',
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!resp.ok) {
+      console.warn(`user_login: HTTP ${resp.status} ${(await resp.text()).slice(0, 200)}`);
+      return null;
+    }
+    return await resp.json();
+  } catch (e) {
+    console.warn(`user_login failed: ${e.message}`);
+    return null;
+  }
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -342,14 +372,17 @@ async function handleAuthorized(req, res, query) {
   }
 
   // Minimal prototype session: store a few claims + the id_token (for logout hint).
-  setCookie(res, 'oidc_session', packCookie({
+  const session = {
     sub: claims.sub,
     name: claims.name,
     email: claims.email,
     email_verified: claims.email_verified,
     callsign: claims.preferred_username,
     id_token: tokens.id_token,
-  }), { maxAge: 3600 });
+  };
+  const user = await recordLogin(session);
+  if (user) session.first_seen = user.first_seen;
+  setCookie(res, 'oidc_session', packCookie(session), { maxAge: 3600 });
 
   // Success: go back into the SPA (where the login widget shows the identity),
   // not to a server-rendered page.
@@ -373,6 +406,7 @@ async function handleMe(req, res) {
     email: session.email,
     email_verified: session.email_verified,
     sub: session.sub,
+    first_seen: session.first_seen, // ISO timestamp of the first login; absent if not recorded
   }));
 }
 

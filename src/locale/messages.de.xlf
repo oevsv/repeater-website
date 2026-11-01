@@ -665,6 +665,9 @@
       <trans-unit id="repeaterType" datatype="html">
         <source>Repeatertyp</source>
       </trans-unit>
+      <trans-unit id="authFirstSeen" datatype="html">
+        <source>Erstmals angemeldet</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -32,6 +32,10 @@
           <span class="auth-label" i18n="@@authSubject">ID</span>
           <span class="auth-sub">{{ me?.sub }}</span>
         </li>
+        <li *ngIf="me?.first_seen">
+          <span class="auth-label" i18n="@@authFirstSeen">First seen</span>
+          <span>{{ me?.first_seen | date: 'medium' }}</span>
+        </li>
       </ul>
       <a class="uk-button uk-button-default uk-width-1-1 auth-logout" href="/logout"
          i18n="@@authLogout">Log out</a>

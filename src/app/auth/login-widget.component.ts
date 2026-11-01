@@ -9,6 +9,9 @@ interface Me {
   email?: string;
   email_verified?: boolean;
   sub?: string;
+  /** ISO timestamp of the user's first login (users table); absent if the
+   *  login could not be recorded. */
+  first_seen?: string;
 }
 
 /**

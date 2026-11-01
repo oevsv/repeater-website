@@ -13,8 +13,8 @@ It exposes these paths, which nginx proxies to it:
 | Path | What it does |
 |---|---|
 | `GET /login` | Starts the flow: sets a short-lived signed cookie (state/nonce/PKCE verifier) and 302-redirects the browser to Keycloak. |
-| `GET /authorized` | OAuth callback. Exchanges the `code` for tokens **server-side** (secret stays here), verifies the `id_token` signature against the realm JWKS, then shows the user's claims (callsign, name, e-mail, …) and sets the session cookie. |
-| `GET /me` | Returns the logged-in user's **display-safe** claims as JSON (`callsign`, `name`, `email`, `email_verified`, `sub`), or `401 {"authenticated":false}`. Backs the Angular login widget. Never returns a token. |
+| `GET /authorized` | OAuth callback. Exchanges the `code` for tokens **server-side** (secret stays here), verifies the `id_token` signature against the realm JWKS, records the login in the database (see [Recording logins](#recording-logins-users-table)), sets the session cookie and redirects back into the SPA. |
+| `GET /me` | Returns the logged-in user's **display-safe** claims as JSON (`callsign`, `name`, `email`, `email_verified`, `sub`, `first_seen`), or `401 {"authenticated":false}`. Backs the Angular login widget. Never returns a token. |
 | `ANY /api/secure/*` | Authenticated proxy to PostgREST. Requires a session (else `401`), mints a short-lived signed JWT carrying the identity, and forwards the request to PostgREST on localhost. See [Connecting to PostgREST](#connecting-to-postgrest-apisecure). |
 | `GET /logout` | Clears the session cookie and does an RP-initiated logout at Keycloak. |
 | `GET /healthz` | Liveness probe → `ok`. |
@@ -176,6 +176,21 @@ calls `/me`; authenticated data calls go to `/api/secure/…`.
 - For clean logout, the client's **Valid post logout redirect URIs** should include
   `https://repeater.oevsv.at/` (or `+` to reuse the redirect URIs). If it doesn't,
   Keycloak still logs the user out but shows its own page instead of redirecting back.
+
+## Recording logins (users table)
+
+After every successful login `/authorized` calls PostgREST's
+`POST /rpc/user_login` (database function `api.user_login()`, migration
+`repeater-db/postgres/migrations/2026-11-01_users.sql`) with a token minted
+as for `/api/secure`. The function takes the user from that token (`sub`,
+`callsign`) and creates or updates the row in `public.users`
+(`id` = `sub`, `callsign`, `first_seen`, `last_seen`). It returns the row; its
+`first_seen` is kept in the session and returned by `/me`, and the login widget
+shows it.
+
+Needs `PGRST_JWT_SECRET` (the same setup as `/api/secure`). If it is not set,
+or PostgREST / the database is unreachable (3 s timeout), the login still
+succeeds; the problem is logged and `/me` just has no `first_seen`.
 
 ## Connecting to PostgREST (`/api/secure`)
 
