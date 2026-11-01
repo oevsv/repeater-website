@@ -52,6 +52,10 @@ if (!cfg.clientSecret) {
   console.error('FATAL: OIDC_CLIENT_SECRET is not set. Refusing to start.');
   process.exit(1);
 }
+if (!isHttpUrl(cfg.pgrstUpstream)) {
+  console.warn(`WARN: PGRST_UPSTREAM is not a valid http(s) URL: "${cfg.pgrstUpstream}" ` +
+    `(expected e.g. http://127.0.0.1:3000) - /api/secure and recording logins will fail.`);
+}
 if (!process.env.COOKIE_SECRET) {
   console.warn('WARN: COOKIE_SECRET not set — using a random key; sessions will not survive a restart.');
 }
@@ -63,8 +67,23 @@ const endpoints = {
   logout:  `${cfg.issuer}/protocol/openid-connect/logout`,
 };
 
+function isHttpUrl(s) {
+  try {
+    return ['http:', 'https:'].includes(new URL(s).protocol);
+  } catch {
+    return false;
+  }
+}
+
 function env(name, dflt) {
-  const v = process.env[name];
+  let v = process.env[name];
+  // systemd's EnvironmentFile only knows comments on their own line: after
+  // "X=1   # note", X is "1   # note". Drop such a comment, and say so (without
+  // printing the value, it may be a secret).
+  if (v !== undefined && /\s#/.test(v)) {
+    console.warn(`WARN: ${name}: ignoring the comment after its value; put comments on their own line`);
+    v = v.replace(/\s+#.*$/, '');
+  }
   return (v === undefined || v === '') ? dflt : v;
 }
 

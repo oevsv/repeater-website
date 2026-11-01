@@ -89,10 +89,17 @@ OIDC_POST_LOGOUT_URI=https://repeater.oevsv.at/
 # For the /api/secure -> PostgREST proxy and recording logins (see below):
 # the contents of /etc/postgrest/jwt-secret - MUST equal PostgREST's jwt-secret
 PGRST_JWT_SECRET=<cat /etc/postgrest/jwt-secret>
+# Defaults, uncomment only to change them:
 # PGRST_UPSTREAM=http://127.0.0.1:3000
 # PGRST_ROLE=web_user
-# PGRST_STRIP_PREFIX=/api/secure   # if PostgREST serves tables at its root
+# if PostgREST serves tables at its root:
+# PGRST_STRIP_PREFIX=/api/secure
 ```
+
+Comments must be on their own line: systemd's `EnvironmentFile` treats text after a
+value as part of the value (`X=1  # note` sets X to `1  # note`). The service drops
+such a trailing comment with a warning, and warns at start-up if `PGRST_UPSTREAM` is
+not a valid URL.
 
 ```bash
 sudo install -m 600 /dev/null /etc/repeater-auth.env
@@ -298,5 +305,5 @@ redirect URI, since `localhost` is not in the client's allowed redirect URIs.)
 
 - `server.js` — the service (zero dependencies): login, callback, `/me`,
   `/logout`, and the `/api/secure` PostgREST proxy.
-- `.env.example` — config template (copy to `.env`, never commit `.env`).
+- `.env.example` — config template: `/etc/repeater-auth.env` in production, `.env` for local runs (never commit either).
 - `../src/app/auth/login-widget.component.*` — the Angular login widget.
