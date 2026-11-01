@@ -102,7 +102,7 @@ Run it under systemd so the secret is loaded from that file (never on a command
 line, never in the repo):
 
 ```ini
-# /etc/systemd/system/repeater-auth.service
+# /usr/lib/systemd/system/repeater-auth.service
 [Unit]
 Description=repeater.oevsv.at OIDC auth prototype
 After=network.target
