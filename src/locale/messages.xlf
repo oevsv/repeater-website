@@ -104,20 +104,6 @@
           <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="introtext_details1" datatype="html">
-        <source> Click on a repeater for further details.<x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/> An interactive table of all repeaters can be found </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">46,48</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="introtext_details1a" datatype="html">
-        <source> here</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">49</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="introtext_details2" datatype="html">
         <source> Further information including downloadable repeater information, code plugs and Open Data can be found </source>
         <context-group purpose="location">
@@ -140,7 +126,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details5" datatype="html">
-        <source>Please send your feedback/updates to</source>
+        <source>Please send your feedback/updates to </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">56</context>

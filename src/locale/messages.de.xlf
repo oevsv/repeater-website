@@ -100,22 +100,8 @@
           <context context-type="linenumber">52</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="introtext_details1" datatype="html">
-        <source> Klicken Sie auf einen Repeater um weitere Informationen zu erhalten.<x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/> Eine interaktive Tabelle aller Repeater findet sich </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">54</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="introtext_details1a" datatype="html">
-        <source>hier</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
-          <context context-type="linenumber">54</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="introtext_details2" datatype="html">
-        <source>Zusätzliche Informationen wie ausdruckbare Karten, Codeplugs und Open Data finden Sie</source>
+        <source>Zusätzliche Informationen wie ausdruckbare Karten, Codeplugs und Open Data finden Sie </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">56</context>
@@ -136,7 +122,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="introtext_details5" datatype="html">
-        <source>Bitte schicken Sie Ihr Feedback/Updates an</source>
+        <source>Bitte schicken Sie Ihr Feedback/Updates an </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/map/frqmap.component.html</context>
           <context context-type="linenumber">62</context>
