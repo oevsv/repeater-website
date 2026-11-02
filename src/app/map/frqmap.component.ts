@@ -34,7 +34,7 @@ import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
-import { NetworkStatus, RepeaterStatusService, TECHNOLOGY_ORDER } from './repeater-status.service';
+import { NetworkStatus, RepeaterStatusService, TECHNOLOGY_ORDER, transmitterIndex, transmitterKey } from './repeater-status.service';
 import { SettingsService } from './settings.service';
 
 
@@ -61,6 +61,8 @@ const MOBILE_VISIBLE_SHARE = 0.9;
 /** URL segment for "all repeater types" (/de/all/map); the settings call that
  *  type null, which the component keeps as the string 'null'. */
 const ALL_TYPES_SLUG = 'all';
+/** /site/<callsign>: width and height (m) of the area shown around the site. */
+const SITE_VIEW_SIZE_M = 5000;
 /** localStorage key remembering that the "tap a repeater" hint was dismissed. */
 const HINT_DISMISSED_KEY = 'frqmap.hintDismissed';
 
@@ -236,6 +238,15 @@ export class FrqmapComponent implements OnInit {
   /** Repeater type from the URL (/de/<type>/map), lower case; applied once the
    *  settings with the known types have loaded. */
   private routeType: string = ALL_TYPES_SLUG;
+  /** /site/<callsign>: callsign whose site is selected and shown once the sites
+   *  are drawn; null once done (or on the map pages). */
+  private focusCallsign: string | null = null;
+  /** A site was shown for /site/<callsign>, so the initial Austria view must not
+   *  replace it. */
+  private siteFocused = false;
+  /** loadSites() was called before the transmitter list (trxInfoDump, needed to
+   *  filter the sites) arrived; it runs again once the list is there. */
+  private sitesWaitingForTransmitters = false;
   /** Type the repeaters were last loaded for (avoids loading them twice). */
   private loadedType: String | null = null;
 
@@ -343,7 +354,9 @@ export class FrqmapComponent implements OnInit {
       this.router.navigate(['/', ALL_TYPES_SLUG, 'map'], { replaceUrl: true });
       return;
     }
-    if (this.route.snapshot.paramMap.get('type') !== this.routeType) {
+    const typeParam = this.route.snapshot.paramMap.get('type');
+    if (typeParam !== null && typeParam !== this.routeType) {
+      // normalise /de/FM/map -> /de/fm/map (not on /site/<callsign>, which has no type)
       this.router.navigate(['/', this.routeType, 'map'], { replaceUrl: true });
     }
     // "all" is null in the settings; the component keeps it as the string 'null'.
@@ -380,10 +393,17 @@ export class FrqmapComponent implements OnInit {
     // /de/fm/map -> /de/dmr/map reuses this component, so follow the parameter
     // (also covers the browser's back / forward buttons).
     this.route.paramMap.subscribe((params) => {
+      // /site/<callsign> shows the map with all types, focused on that site.
+      const callsign = params.get('callsign');
+      this.focusCallsign = callsign ? callsign.toUpperCase() : null;
+      if (callsign && callsign !== this.focusCallsign) {
+        this.router.navigate(['/site', this.focusCallsign], { replaceUrl: true });
+      }
       this.routeType = (params.get('type') ?? ALL_TYPES_SLUG).toLowerCase();
       if (this.formOptions) {
         this.applyRouteType();
       }
+      this.focusRequestedSite(); // /site/A -> /site/B: the sites are already drawn
     });
     this.loadOptions()
     this.initMap()
@@ -540,7 +560,9 @@ export class FrqmapComponent implements OnInit {
     // re-fit once after the first layout in case the target was created at 0x0.
     setTimeout(() => {
       this.map.updateSize();
-      this.fitAustria();
+      if (!this.siteFocused) {
+        this.fitAustria();
+      }
     }, 100);
   }
 
@@ -702,6 +724,13 @@ export class FrqmapComponent implements OnInit {
  loadSites() {
    console.log("loadSites");
    this.loadedType = this.selectedType;
+   // The sites are filtered with the transmitter list; without it the map would
+   // show no sites at all (e.g. coming from another page, when the cached
+   // settings make this run before the list has arrived).
+   if (!this.trxInfoDump) {
+     this.sitesWaitingForTransmitters = true;
+     return;
+   }
     // A filter change (repeater type / frequency / call sign) rebuilds the marker
     // set and may drop the currently selected repeater. Remove its coverage
     // overlay so a stale coverage layer doesn't linger over the refiltered map.
@@ -803,6 +832,46 @@ export class FrqmapComponent implements OnInit {
       //this.map.addLayer(vectorLayer)
 
     }
+    this.focusRequestedSite();
+  }
+
+  /** /site/<callsign>: selects the site with that callsign as a click would
+   *  (details panel open) and shows about 5 km x 5 km around it. A callsign used
+   *  at several sites: the one where it is active in a network, else the first
+   *  by name. Unknown callsign: the map with all types. */
+  private focusRequestedSite(): void {
+    const call = this.focusCallsign;
+    if (!call || !this.siteVectorSource || !this.siteVectorSource.getFeatures().length) {
+      return; // sites not drawn yet: comes back here once they are
+    }
+    this.focusCallsign = null;
+    const activeHere = (f: Feature<any>) =>
+      this.statusesFor(f.get('site')).some((s) => s.active && s.callsign.toUpperCase() === call);
+    const candidates = (this.siteVectorSource.getFeatures() as Feature<any>[])
+      .filter((f) => ((f.get('site') as Site).callsigns ?? []).some((c) => c.toUpperCase() === call))
+      .sort((a, b) => Number(activeHere(b)) - Number(activeHere(a))
+        || (a.get('site') as Site).site_name.localeCompare((b.get('site') as Site).site_name));
+    if (!candidates.length) {
+      this.router.navigate(['/', ALL_TYPES_SLUG, 'map'], { replaceUrl: true });
+      return;
+    }
+    const feature = candidates[0];
+    const site = feature.get('site') as Site;
+    const coordinate = (feature.getGeometry() as Point).getCoordinates();
+    this.siteFocused = true;
+
+    if (this.selectedFeature) {
+      this.deselectRepeater(this.selectedFeature);
+    }
+    this.clearLink();
+    this.clearLocationMarker();
+    this.selectedFeature = feature;
+    this.selectRepeater(feature);
+    this.openSite(site, coordinate);
+
+    this.map.getView().cancelAnimations(); // instead of openSite()'s panning
+    this.showAroundSite(coordinate, site.latitude);
+    this.title.setTitle($localize`:@@titleMapType:ÖVSV repeater map – ${site.site_name}:TYPE:`);
   }
 
   // obsolete
@@ -932,10 +1001,12 @@ export class FrqmapComponent implements OnInit {
       .subscribe((val) => {
         if (val.length > 0) {
           this.trxInfoDump = val
-          this.siteTransmitters = new Set(val.flatMap((t) =>
-            ['fm', 'dmr', 'c4fm', 'dstar', 'tetra'].filter((tech) => (t as any)[tech] === true)
-              .map((tech) => `${t.site_name}|${(t.callsign ?? '').toUpperCase()}|${tech}`)));
+          this.siteTransmitters = transmitterIndex(val as any[]);
           this.applyNetworkStatus();
+          if (this.sitesWaitingForTransmitters) {
+            this.sitesWaitingForTransmitters = false;
+            this.loadSites();
+          }
         }
         else {
           this.trxInfoDump=null;
@@ -1101,6 +1172,35 @@ export class FrqmapComponent implements OnInit {
     this.fitCoordinates([from, siteCoordinate]);
   }
 
+  /** Shows SITE_VIEW_SIZE_M around a site, centred in the part of the map not
+   *  covered by the top bar and the details panel. The size applies to the longer
+   *  side of that area: on a phone the bottom sheet leaves only a strip, so a 5 km
+   *  square would zoom far out. */
+  private showAroundSite(coordinate: Coordinate, latitude: number): void {
+    const size = this.map.getSize();
+    if (!size) {
+      return;
+    }
+    const [width, height] = size;
+    let free: { left: number; top: number; width: number; height: number };
+    if (width >= DESKTOP_BREAKPOINT) {
+      free = { left: 0, top: TOP_BAR_HEIGHT, width: width - DETAILS_CARD_WIDTH, height: height - TOP_BAR_HEIGHT };
+    } else {
+      // The sheet may not be rendered yet; it takes up to 60% of the height.
+      const sheet = document.querySelector('.mdetails') as HTMLElement | null;
+      const sheetHeight = sheet?.offsetHeight || height * 0.6;
+      free = { left: 0, top: TOP_BAR_HEIGHT, width, height: Math.max(height - TOP_BAR_HEIGHT - sheetHeight, 1) };
+    }
+    // Mercator stretches distances by 1 / cos(latitude).
+    const span = SITE_VIEW_SIZE_M / Math.cos(latitude * Math.PI / 180);
+    const resolution = span / Math.max(free.width, free.height);
+    // Put the site in the middle of the free area (map y grows northwards).
+    const x = free.left + free.width / 2, y = free.top + free.height / 2;
+    const view = this.map.getView();
+    view.setResolution(resolution);
+    view.setCenter([coordinate[0] - (x - width / 2) * resolution, coordinate[1] + (y - height / 2) * resolution]);
+  }
+
   /** Zooms / pans so all coordinates are visible in the area left free by the top
    *  bar and the details panel (right card on desktop, bottom sheet on mobile). */
   private fitCoordinates(coordinates: Coordinate[]): void {
@@ -1254,7 +1354,7 @@ export class FrqmapComponent implements OnInit {
     }
     return (site.callsigns ?? [])
       .flatMap((c) => (this.networkStatus[c.toUpperCase()] ?? []).filter((s) =>
-        this.siteTransmitters.has(`${site.site_name}|${c.toUpperCase()}|${s.technology}`)))
+        this.siteTransmitters.has(transmitterKey(site.site_name, c, s.technology))))
       .sort((a, b) => technologyRank(a.technology) - technologyRank(b.technology)
         || a.network.localeCompare(b.network) || a.callsign.localeCompare(b.callsign));
   }

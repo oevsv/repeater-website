@@ -683,6 +683,33 @@
       <trans-unit id="netLastActive" datatype="html">
         <source>zuletzt aktiv</source>
       </trans-unit>
+      <trans-unit id="statusHeading" datatype="html">
+        <source>Repeaterstatus – <x id="INTERPOLATION" equiv-text="{{ label }}"/></source>
+      </trans-unit>
+      <trans-unit id="statusActiveCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ activeCount }}"/> von <x id="INTERPOLATION_1" equiv-text="{{ rows.length }}"/> aktiv</source>
+      </trans-unit>
+      <trans-unit id="statusEmpty" datatype="html">
+        <source>Keine Statusinformation vorhanden.</source>
+      </trans-unit>
+      <trans-unit id="statusFailed" datatype="html">
+        <source>Der Status konnte nicht geladen werden.</source>
+      </trans-unit>
+      <trans-unit id="statusNetwork" datatype="html">
+        <source>Netz</source>
+      </trans-unit>
+      <trans-unit id="statusInfo" datatype="html">
+        <source>Info</source>
+      </trans-unit>
+      <trans-unit id="statusState" datatype="html">
+        <source>Status</source>
+      </trans-unit>
+      <trans-unit id="navStatus" datatype="html">
+        <source>Status:</source>
+      </trans-unit>
+      <trans-unit id="titleStatusList" datatype="html">
+        <source>Repeaterstatus ÖVSV – <x id="TYPE" equiv-text="${this.label}"/></source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -225,6 +225,7 @@ $accent: #008CEA; // $oevsv-blue
 .drawer-types {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
 
   a {
@@ -269,4 +270,9 @@ $accent: #008CEA; // $oevsv-blue
       color: #fff !important;
     }
   }
+}
+
+.drawer-types-label {
+  color: #666;
+  font-size: 0.9em;
 }

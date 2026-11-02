@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, Inject, LOCALE_ID } from '@angular/core';
 import { Router } from '@angular/router';
 import { SettingsService } from './map/settings.service';
+import { STATUS_LIST_TECHNOLOGIES } from './map/repeater-status.service';
 
 @Component({
   standalone: false,
@@ -23,6 +24,17 @@ export class AppComponent {
           ? { slug: 'all', label: $localize`:@@allTypes:All repeater` }
           : { slug: t.type.toLowerCase(), label: t.label });
     });
+  }
+
+  /** Status lists (/list/<technology>) for the technologies with a network. */
+  get statusLists(): { slug: string; label: string }[] {
+    return this.mapTypes.filter((t) => STATUS_LIST_TECHNOLOGIES.includes(t.slug));
+  }
+
+  /** Technology of the current status list (/list/fm -> "fm"), else null. */
+  get currentStatusList(): string | null {
+    const m = this.router.url.match(/^\/list\/([^/?#]+)/);
+    return m ? m[1].toLowerCase() : null;
   }
 
   /** Repeater type of the current map page (/fm/map -> "fm"), else null. */

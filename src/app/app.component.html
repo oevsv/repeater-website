@@ -55,7 +55,15 @@
            [class.current]="t.slug === currentMapType">{{ t.label }}</a>
       </div>
     </div>
-    <a routerLink="/list" routerLinkActive="current" i18n="@@navList">List</a>
+    <div class="drawer-map">
+      <a routerLink="/list" [class.current]="isListPage" i18n="@@navList">List</a>
+      <!-- Status per technology (/list/fm, ...); the current one is highlighted. -->
+      <div class="drawer-types">
+        <span class="drawer-types-label" i18n="@@navStatus">Status:</span>
+        <a *ngFor="let t of statusLists" [routerLink]="['/list', t.slug]"
+           [class.current]="t.slug === currentStatusList">{{ t.label }}</a>
+      </div>
+    </div>
   </nav>
 
   <div class="drawer-intro">

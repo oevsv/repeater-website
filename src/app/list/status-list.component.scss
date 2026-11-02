@@ -1,0 +1,42 @@
+/* Status list per technology (/list/fm, ...); same look as the repeater list. */
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.status-table {
+  min-width: 560px;
+
+  th {
+    white-space: nowrap;
+  }
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+h2 {
+  margin-bottom: 4px;
+}
+
+.status-summary {
+  margin-top: 0;
+  color: #666;
+}
+
+.state {
+  color: #666;
+
+  &.active {
+    color: #2e7d32; // same as the "aktiv" on the map
+    font-weight: 600;
+  }
+}
+
+// Active rows marked with the highlighter green of the online map markers.
+tbody tr:not(.inactive) td:first-child {
+  box-shadow: inset 4px 0 0 #39ff14;
+}

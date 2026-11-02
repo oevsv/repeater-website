@@ -22,8 +22,32 @@ export interface NetworkStatus {
   last_active: string;
 }
 
-/** Order of the technologies in the status lists: FM first. */
+/** Order of the technologies in the status lists: FM first. Same names as the
+ *  trx flags (fm, dmr, ...) and the map pages (/fm/map, ...). */
 export const TECHNOLOGY_ORDER = ['fm', 'dmr', 'c4fm', 'dstar', 'tetra'];
+
+/** Technologies with a status list (/list/<technology>): those with a network. */
+export const STATUS_LIST_TECHNOLOGIES = ['fm', 'dmr', 'c4fm', 'dstar'];
+
+/** A transmitter as far as status matching needs it (from /api/trx_type). */
+export interface Transmitter {
+  site_name: string;
+  callsign: string;
+  [technologyFlag: string]: any;
+}
+
+/** Key of "this site has a transmitter with this callsign and technology". A
+ *  network status counts for a site only if this key exists, e.g. an OE-Link
+ *  (FM) status only for a site with an FM transmitter of that callsign. */
+export function transmitterKey(siteName: string, callsign: string, technology: string): string {
+  return `${siteName}|${(callsign ?? '').toUpperCase()}|${technology}`;
+}
+
+/** transmitterKey() of every technology of every transmitter. */
+export function transmitterIndex(transmitters: Transmitter[]): Set<string> {
+  return new Set(transmitters.flatMap((t) =>
+    TECHNOLOGY_ORDER.filter((tech) => t[tech] === true).map((tech) => transmitterKey(t.site_name, t.callsign, tech))));
+}
 
 /**
  * Polls the network status every 5 minutes (the scrapers run every few
@@ -37,6 +61,11 @@ export class RepeaterStatusService {
   private readonly pollIntervalMs = 5 * 60 * 1000;
 
   constructor(private http: HttpClient) {}
+
+  /** The current statuses, once (errors are passed on). */
+  current(): Observable<NetworkStatus[]> {
+    return this.http.get<NetworkStatus[]>(this.statusUrl, { headers: { Accept: 'application/json' } });
+  }
 
   /** Emits the current statuses immediately, then every 5 minutes. */
   poll(): Observable<NetworkStatus[]> {

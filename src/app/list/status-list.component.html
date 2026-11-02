@@ -1,0 +1,37 @@
+<div class="uk-section-default uk-section">
+  <div class="uk-container uk-container-xlarge">
+    <h2 i18n="@@statusHeading">Repeater status – {{ label }}</h2>
+    <p *ngIf="loaded && !failed && rows.length" class="status-summary"
+       i18n="@@statusActiveCount">{{ activeCount }} of {{ rows.length }} active</p>
+    <p *ngIf="loaded && !failed && !rows.length" i18n="@@statusEmpty">No status information.</p>
+    <p *ngIf="failed" i18n="@@statusFailed">The status could not be loaded.</p>
+
+    <div *ngIf="rows.length" class="table-container">
+      <table class="uk-table uk-table-small uk-table-divider uk-table-hover status-table">
+        <thead>
+          <tr>
+            <th i18n="@@listSite">Site</th>
+            <th i18n="@@listCallsign">Call sign</th>
+            <th i18n="@@statusNetwork">Network</th>
+            <th i18n="@@statusInfo">Info</th>
+            <th i18n="@@statusState">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of rows" [class.inactive]="!r.active">
+            <!-- The map focused on this site, details panel open. -->
+            <td><a [routerLink]="['/site', r.callsign]">{{ r.site }}</a></td>
+            <td class="nowrap">{{ r.callsign }}</td>
+            <td class="nowrap">{{ r.network }}</td>
+            <td>{{ r.text }}</td>
+            <td class="state nowrap" [class.active]="r.active">
+              <ng-container *ngIf="r.active" i18n="@@netActive">active</ng-container>
+              <ng-container *ngIf="!r.active"><ng-container i18n="@@netLastActive">last active</ng-container>
+                {{ r.last_active | date: 'short' }}</ng-container>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
