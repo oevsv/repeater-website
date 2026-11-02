@@ -34,7 +34,7 @@ import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
-import { NETWORK_TECHNOLOGY, NetworkStatus, RepeaterStatusService } from './repeater-status.service';
+import { NetworkStatus, RepeaterStatusService, TECHNOLOGY_ORDER } from './repeater-status.service';
 import { SettingsService } from './settings.service';
 
 
@@ -1247,13 +1247,16 @@ export class FrqmapComponent implements OnInit {
 
   /** Network status entries of a site's callsigns (empty if none), only for
    *  networks whose technology the site has a transmitter for with that
-   *  callsign (see siteTransmitters). */
+   *  callsign (see siteTransmitters); FM first, then DMR, ... */
   statusesFor(site: Site | null): NetworkStatus[] {
     if (!site) {
       return [];
     }
-    return (site.callsigns ?? []).flatMap((c) => (this.networkStatus[c.toUpperCase()] ?? []).filter((s) =>
-      this.siteTransmitters.has(`${site.site_name}|${c.toUpperCase()}|${NETWORK_TECHNOLOGY[s.network]}`)));
+    return (site.callsigns ?? [])
+      .flatMap((c) => (this.networkStatus[c.toUpperCase()] ?? []).filter((s) =>
+        this.siteTransmitters.has(`${site.site_name}|${c.toUpperCase()}|${s.technology}`)))
+      .sort((a, b) => technologyRank(a.technology) - technologyRank(b.technology)
+        || a.network.localeCompare(b.network) || a.callsign.localeCompare(b.callsign));
   }
 
   /** True if one of the site's network status entries is active. */
@@ -1261,14 +1264,15 @@ export class FrqmapComponent implements OnInit {
     return this.statusesFor(site).some((s) => s.active);
   }
 
-  /** Marks sites active in a network green - only for networks of the shown
-   *  technology ("all", or e.g. FM for OE-Link), so the DMR page doesn't turn
-   *  green because of FM. Call after new statuses, sites or type. */
+  /** Marks sites active in a network green - on "all" for any network, else only
+   *  for networks of the shown technology (FM page: OE-Link, DMR page: IPSC2), so
+   *  a page never turns green because of another technology. Call after new
+   *  statuses, sites or type. */
   private applyNetworkStatus(): void {
     const type = String(this.selectedType ?? 'null').toLowerCase();
     for (const feature of (this.siteVectorSource?.getFeatures() ?? []) as Feature<any>[]) {
       const online = this.statusesFor(feature.get('site')).some((s) =>
-        s.active && (type === 'null' || NETWORK_TECHNOLOGY[s.network] === type));
+        s.active && (type === 'null' || s.technology === type));
       if (!!feature.get('online') !== online) {
         feature.set('online', online);
         this.styleRepeater(feature);
@@ -1309,6 +1313,12 @@ function readHintDismissed(): boolean {
   } catch {
     return false;
   }
+}
+
+/** Position of a technology in TECHNOLOGY_ORDER (unknown ones last). */
+function technologyRank(technology: string): number {
+  const i = TECHNOLOGY_ORDER.indexOf(technology);
+  return i < 0 ? TECHNOLOGY_ORDER.length : i;
 }
 
 /** "Locate me" crosshair, inlined so the control is self-contained. Uses
