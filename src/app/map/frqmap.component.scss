@@ -376,7 +376,7 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
   color: $muted;
 
   &.active {
-    color: #2e7d32; // same green as the online marker
+    color: #2e7d32; // dark green: the marker's highlighter green is unreadable as text
     font-weight: 600;
   }
 }
@@ -405,9 +405,9 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
 .net-status-block {
   margin: 8px 0 12px;
   padding: 8px 10px;
-  border-left: 3px solid #2e7d32;
+  border-left: 4px solid #39ff14; // same highlighter green as the online marker
   border-radius: 4px;
-  background: rgba(46, 125, 50, 0.06);
+  background: rgba(57, 255, 20, 0.1);
 
   .net-status + .net-status {
     margin-top: 8px;

@@ -124,8 +124,10 @@ interface DiscColor { color: string; opacity: number; }
 const REPEATER_BG_DEFAULT: DiscColor = { color: '#333333', opacity: 0.6 };
 /** Background disc: blue when the repeater is selected (clicked). */
 const REPEATER_BG_SELECTED: DiscColor = { color: '#1565c0', opacity: 0.9 };
-/** Background disc: green when the repeater is active in a network. */
-const REPEATER_BG_ONLINE: DiscColor = { color: '#2e7d32', opacity: 0.9 };
+/** Background disc: highlighter green when the repeater is active in a network. */
+const REPEATER_BG_ONLINE: DiscColor = { color: '#39ff14', opacity: 1 };
+/** Tower and waves on the highlighter green disc: dark, white/green would vanish. */
+const ONLINE_FOREGROUND = '#1a1a1a';
 
 /** Resting colours of the tower / transmission elements. */
 const TOWER_DEFAULT = '#ffffff';
@@ -1192,10 +1194,11 @@ export class FrqmapComponent implements OnInit {
    *  tower and transmission colours come from the feature's own state. Call
    *  after changing any colour property. */
   private styleRepeater(feature: Feature<any>): void {
+    const onlineDisc = !feature.get('selected') && feature.get('online');
     const background = feature.get('selected') ? REPEATER_BG_SELECTED
-      : feature.get('online') ? REPEATER_BG_ONLINE : REPEATER_BG_DEFAULT;
-    const tower = feature.get('towerColor') ?? TOWER_DEFAULT;
-    const transmission = feature.get('txColor') ?? TRANSMISSION_DEFAULT;
+      : onlineDisc ? REPEATER_BG_ONLINE : REPEATER_BG_DEFAULT;
+    const tower = onlineDisc ? ONLINE_FOREGROUND : feature.get('towerColor') ?? TOWER_DEFAULT;
+    const transmission = onlineDisc ? ONLINE_FOREGROUND : feature.get('txColor') ?? TRANSMISSION_DEFAULT;
     feature.setStyle(repeaterStyle(background, tower, transmission));
   }
 
