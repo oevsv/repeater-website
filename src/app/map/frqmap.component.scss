@@ -350,6 +350,75 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
   }
 }
 
+/* --- network status (OE-Link, ...): tooltip and details panel ------------ */
+
+.net-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.net-network {
+  font-weight: 700;
+}
+
+.net-callsign {
+  font-weight: 600;
+}
+
+.net-text {
+  color: $muted;
+}
+
+.net-state {
+  flex-basis: 100%;
+  color: $muted;
+
+  &.active {
+    color: #2e7d32; // same green as the online marker
+    font-weight: 600;
+  }
+}
+
+.status-tip {
+  min-width: 160px;
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: $card-bg;
+  box-shadow: $shadow;
+  font-size: 13px;
+  line-height: 1.4;
+  pointer-events: none; // the map underneath keeps getting the mouse
+
+  .net-status + .net-status {
+    margin-top: 6px;
+  }
+}
+
+.status-tip-site {
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.net-status-block {
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid #2e7d32;
+  border-radius: 4px;
+  background: rgba(46, 125, 50, 0.06);
+
+  .net-status + .net-status {
+    margin-top: 8px;
+  }
+
+  &.inactive {
+    border-left-color: #bdbdbd;
+    background: rgba(0, 0, 0, 0.03);
+  }
+}
+
 /* --- nearby sites list ------------------------------------------------ */
 
 .nearby {

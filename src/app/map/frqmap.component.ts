@@ -34,7 +34,7 @@ import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
-import { RepeaterStatusService } from './repeater-status.service';
+import { NETWORK_TECHNOLOGY, NetworkStatus, RepeaterStatusService } from './repeater-status.service';
 import { SettingsService } from './settings.service';
 
 
@@ -109,9 +109,9 @@ const LINK_STYLE = [
  * A repeater is drawn as a transmitter-tower icon with three independently
  * colourable elements:
  *   - background:   the disc behind the tower. Partly-transparent dark grey when
- *                   idle, blue when the repeater is selected (this replaces the
- *                   former red -> green dot transition).
- *   - tower:        the "A" mast. Reserved for online/offline status.
+ *                   idle, green when the repeater is active in a network (e.g.
+ *                   OE-Link, see applyNetworkStatus()), blue when selected.
+ *   - tower:        the "A" mast. Reserved for further status.
  *   - transmission: the antenna waves. Reserved for transmitting/idle status.
  * Tower and transmission start at their resting colours; updateRepeaterColors()
  * can recolour either at any time (e.g. driven by the live status poll). The
@@ -124,17 +124,12 @@ interface DiscColor { color: string; opacity: number; }
 const REPEATER_BG_DEFAULT: DiscColor = { color: '#333333', opacity: 0.6 };
 /** Background disc: blue when the repeater is selected (clicked). */
 const REPEATER_BG_SELECTED: DiscColor = { color: '#1565c0', opacity: 0.9 };
+/** Background disc: green when the repeater is active in a network. */
+const REPEATER_BG_ONLINE: DiscColor = { color: '#2e7d32', opacity: 0.9 };
 
 /** Resting colours of the tower / transmission elements. */
 const TOWER_DEFAULT = '#ffffff';
 const TRANSMISSION_DEFAULT = '#00c853';
-
-/** Status -> colour mapping for the planned live status poll. Placeholder
- *  colours; tune once the status endpoint and its semantics are finalised. */
-const TOWER_ONLINE = '#ffffff';
-const TOWER_OFFLINE = '#e53935';        // red
-const TRANSMISSION_ACTIVE = '#00c853';  // green
-const TRANSMISSION_IDLE = '#9e9e9e';    // grey
 
 /** On-map size of the repeater marker (SVG is 128x128). */
 const REPEATER_MARKER_SCALE = 0.15;
@@ -188,7 +183,8 @@ interface Site {
   digipeater: boolean,
   beacon: boolean,
   atv: boolean,
-  callsigns: object,
+  /** Callsigns of the site's active transmitters. */
+  callsigns: string[] | null,
   latitude_formated: string,
   longitude_formated: string,
   sea_level: number,
@@ -260,6 +256,18 @@ export class FrqmapComponent implements OnInit {
   highlightedSite: string | null = null;
 
   @ViewChild('nameInput') private nameInput?: ElementRef<HTMLInputElement>;
+
+  /** Network status (OE-Link, ...) by callsign, from RepeaterStatusService.
+   *  (A plain object: "Map" is OpenLayers' map class in this file.) */
+  private networkStatus: Record<string, NetworkStatus[]> = {};
+  /** Site under the mouse that has network status, shown in a tooltip. */
+  hoverSite: Site | null = null;
+  /** "site|CALLSIGN|technology" of every active transmitter (from trxInfoDump):
+   *  a network status counts for a site only if it has a transmitter with that
+   *  callsign and the network's technology (OE-Link -> an FM transmitter). */
+  private siteTransmitters = new Set<string>();
+  @ViewChild('statusTip', { static: true }) private statusTip!: ElementRef<HTMLElement>;
+  private statusTipOverlay: Overlay | null = null;
 
   constructor(
     private http : HttpClient,
@@ -443,7 +451,17 @@ export class FrqmapComponent implements OnInit {
         }
       });
 
-    // change mouse cursor when over marker
+    // Tooltip with the network status of the repeater under the mouse.
+    this.statusTipOverlay = new Overlay({
+      element: this.statusTip.nativeElement,
+      positioning: 'bottom-center',
+      offset: [0, -14],
+      stopEvent: false,
+    });
+    this.map.addOverlay(this.statusTipOverlay);
+
+    // change mouse cursor when over marker; show the tooltip (mouse only - on
+    // touch screens the details panel shows the same on tap)
     let that = this;
     this.map.on('pointermove', function (e) {
       const pixel = that.map.getEventPixel(e.originalEvent);
@@ -452,6 +470,24 @@ export class FrqmapComponent implements OnInit {
       const target = that.map.getTargetElement();
       if (target) {
         target.style.cursor = hit ? 'pointer' : '';
+      }
+
+      let site: Site | null = null;
+      let coordinate: Coordinate | undefined;
+      if (!e.dragging && (e.originalEvent as PointerEvent).pointerType === 'mouse') {
+        that.map.forEachFeatureAtPixel(pixel, (f) => {
+          const s = (f as Feature<any>).get('site') as Site | undefined;
+          if (s && that.statusesFor(s).length) {
+            site = s;
+            coordinate = ((f as Feature<any>).getGeometry() as Point).getCoordinates();
+            return true;
+          }
+          return false;
+        });
+      }
+      if (site !== that.hoverSite) {
+        that.hoverSite = site;
+        that.statusTipOverlay?.setPosition(coordinate);
       }
     });
 
@@ -755,6 +791,7 @@ export class FrqmapComponent implements OnInit {
         features: featureList
       });
       this.siteVectorSource = vectorSource;
+      this.applyNetworkStatus();
       const vectorLayer = new VectorLayer({
         source: vectorSource,
         zIndex: 2 // above the coverage overlay and the nearby-list line
@@ -893,6 +930,10 @@ export class FrqmapComponent implements OnInit {
       .subscribe((val) => {
         if (val.length > 0) {
           this.trxInfoDump = val
+          this.siteTransmitters = new Set(val.flatMap((t) =>
+            ['fm', 'dmr', 'c4fm', 'dstar', 'tetra'].filter((tech) => (t as any)[tech] === true)
+              .map((tech) => `${t.site_name}|${(t.callsign ?? '').toUpperCase()}|${tech}`)));
+          this.applyNetworkStatus();
         }
         else {
           this.trxInfoDump=null;
@@ -1147,10 +1188,12 @@ export class FrqmapComponent implements OnInit {
   }
 
   /** (Re)applies a repeater feature's current colours to its style. The disc is
-   *  blue when selected, grey otherwise; the tower and transmission colours come
-   *  from the feature's own state. Call after changing any colour property. */
+   *  blue when selected, green when active in a network, grey otherwise; the
+   *  tower and transmission colours come from the feature's own state. Call
+   *  after changing any colour property. */
   private styleRepeater(feature: Feature<any>): void {
-    const background = feature.get('selected') ? REPEATER_BG_SELECTED : REPEATER_BG_DEFAULT;
+    const background = feature.get('selected') ? REPEATER_BG_SELECTED
+      : feature.get('online') ? REPEATER_BG_ONLINE : REPEATER_BG_DEFAULT;
     const tower = feature.get('towerColor') ?? TOWER_DEFAULT;
     const transmission = feature.get('txColor') ?? TRANSMISSION_DEFAULT;
     feature.setStyle(repeaterStyle(background, tower, transmission));
@@ -1185,19 +1228,49 @@ export class FrqmapComponent implements OnInit {
     this.styleRepeater(feature);
   }
 
-  /** Subscribes to the live status poll: every 3s each repeater's tower colour is
-   *  updated from its online/offline state and its transmission colour from its
-   *  transmitting/idle state. While the status service is disabled this completes
-   *  immediately without doing anything (see RepeaterStatusService). */
+  /** Subscribes to the network status poll (every 5 minutes, see
+   *  RepeaterStatusService) and recolours the markers. */
   private startStatusPolling(): void {
     this.statusService.poll().subscribe((statuses) => {
+      const byCallsign: Record<string, NetworkStatus[]> = {};
       for (const status of statuses) {
-        this.updateRepeaterColors(status.site_name, {
-          tower: status.online ? TOWER_ONLINE : TOWER_OFFLINE,
-          transmission: status.transmitting ? TRANSMISSION_ACTIVE : TRANSMISSION_IDLE,
-        });
+        const call = status.callsign.toUpperCase();
+        (byCallsign[call] ??= []).push(status);
       }
+      this.networkStatus = byCallsign;
+      this.applyNetworkStatus();
     });
+  }
+
+  /** Network status entries of a site's callsigns (empty if none), only for
+   *  networks whose technology the site has a transmitter for with that
+   *  callsign (see siteTransmitters). */
+  statusesFor(site: Site | null): NetworkStatus[] {
+    if (!site) {
+      return [];
+    }
+    return (site.callsigns ?? []).flatMap((c) => (this.networkStatus[c.toUpperCase()] ?? []).filter((s) =>
+      this.siteTransmitters.has(`${site.site_name}|${c.toUpperCase()}|${NETWORK_TECHNOLOGY[s.network]}`)));
+  }
+
+  /** True if one of the site's network status entries is active. */
+  hasActiveStatus(site: Site | null): boolean {
+    return this.statusesFor(site).some((s) => s.active);
+  }
+
+  /** Marks sites active in a network green - only for networks of the shown
+   *  technology ("all", or e.g. FM for OE-Link), so the DMR page doesn't turn
+   *  green because of FM. Call after new statuses, sites or type. */
+  private applyNetworkStatus(): void {
+    const type = String(this.selectedType ?? 'null').toLowerCase();
+    for (const feature of (this.siteVectorSource?.getFeatures() ?? []) as Feature<any>[]) {
+      const online = this.statusesFor(feature.get('site')).some((s) =>
+        s.active && (type === 'null' || NETWORK_TECHNOLOGY[s.network] === type));
+      if (!!feature.get('online') !== online) {
+        feature.set('online', online);
+        this.styleRepeater(feature);
+      }
+    }
   }
 
   /** Called by the "locate" control: blue pin at the GPS position (kept blue, not

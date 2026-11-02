@@ -677,6 +677,12 @@
       <trans-unit id="titleList" datatype="html">
         <source>Repeaterliste ÖVSV</source>
       </trans-unit>
+      <trans-unit id="netActive" datatype="html">
+        <source>aktiv</source>
+      </trans-unit>
+      <trans-unit id="netLastActive" datatype="html">
+        <source>zuletzt aktiv</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
