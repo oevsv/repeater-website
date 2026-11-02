@@ -4,9 +4,9 @@
 
   <div id="map" class="map-canvas"></div>
 
-  <!-- Tooltip over a repeater with network status (positioned by an OpenLayers
-       overlay, see frqmap.component.ts). -->
-  <div #statusTip class="status-tip" [hidden]="!hoverStatusesFor(hoverSite).length">
+  <!-- Tooltip over a repeater: site name, plus its network status if active
+       (positioned by an OpenLayers overlay, see frqmap.component.ts). -->
+  <div #statusTip class="status-tip" [hidden]="!hoverSite">
     <div class="status-tip-site">{{ hoverSite?.site_name }}</div>
     <ng-container *ngTemplateOutlet="networkStatusList; context: { $implicit: hoverStatusesFor(hoverSite) }"></ng-container>
   </div>

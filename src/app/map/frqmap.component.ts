@@ -262,7 +262,7 @@ export class FrqmapComponent implements OnInit {
   /** Network status (OE-Link, ...) by callsign, from RepeaterStatusService.
    *  (A plain object: "Map" is OpenLayers' map class in this file.) */
   private networkStatus: Record<string, NetworkStatus[]> = {};
-  /** Site under the mouse that has network status, shown in a tooltip. */
+  /** Site under the mouse, shown in a tooltip (name, plus its active network status). */
   hoverSite: Site | null = null;
   /** "site|CALLSIGN|technology" of every active transmitter (from trxInfoDump):
    *  a network status counts for a site only if it has a transmitter with that
@@ -453,7 +453,7 @@ export class FrqmapComponent implements OnInit {
         }
       });
 
-    // Tooltip with the network status of the repeater under the mouse.
+    // Tooltip with the name and active network status of the repeater under the mouse.
     this.statusTipOverlay = new Overlay({
       element: this.statusTip.nativeElement,
       positioning: 'bottom-center',
@@ -479,7 +479,7 @@ export class FrqmapComponent implements OnInit {
       if (!e.dragging && (e.originalEvent as PointerEvent).pointerType === 'mouse') {
         that.map.forEachFeatureAtPixel(pixel, (f) => {
           const s = (f as Feature<any>).get('site') as Site | undefined;
-          if (s && that.hoverStatusesFor(s).length) {
+          if (s) {
             site = s;
             coordinate = ((f as Feature<any>).getGeometry() as Point).getCoordinates();
             return true;

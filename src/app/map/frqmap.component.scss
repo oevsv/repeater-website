@@ -382,7 +382,6 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
 }
 
 .status-tip {
-  min-width: 160px;
   max-width: 260px;
   padding: 8px 10px;
   border-radius: 8px;
@@ -398,8 +397,12 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
 }
 
 .status-tip-site {
-  margin-bottom: 4px;
   font-weight: 700;
+  white-space: nowrap;
+
+  + .net-status {
+    margin-top: 4px; // only when status lines follow the name
+  }
 }
 
 .net-status-block {
