@@ -479,7 +479,7 @@ export class FrqmapComponent implements OnInit {
       if (!e.dragging && (e.originalEvent as PointerEvent).pointerType === 'mouse') {
         that.map.forEachFeatureAtPixel(pixel, (f) => {
           const s = (f as Feature<any>).get('site') as Site | undefined;
-          if (s && that.statusesFor(s).length) {
+          if (s && that.hoverStatusesFor(s).length) {
             site = s;
             coordinate = ((f as Feature<any>).getGeometry() as Point).getCoordinates();
             return true;
@@ -1259,9 +1259,22 @@ export class FrqmapComponent implements OnInit {
         || a.network.localeCompare(b.network) || a.callsign.localeCompare(b.callsign));
   }
 
-  /** True if one of the site's network status entries is active. */
+  /** The site's network status entries for the shown page: all of them on
+   *  "all", else only the networks of that technology (FM page: OE-Link, DMR
+   *  page: IPSC2). Used by the details panel and the marker colour. */
+  pageStatusesFor(site: Site | null): NetworkStatus[] {
+    const type = String(this.selectedType ?? 'null').toLowerCase();
+    return this.statusesFor(site).filter((s) => type === 'null' || s.technology === type);
+  }
+
+  /** What the hover tooltip shows: the page's entries that are active now. */
+  hoverStatusesFor(site: Site | null): NetworkStatus[] {
+    return this.pageStatusesFor(site).filter((s) => s.active);
+  }
+
+  /** True if one of the site's network status entries on this page is active. */
   hasActiveStatus(site: Site | null): boolean {
-    return this.statusesFor(site).some((s) => s.active);
+    return this.hoverStatusesFor(site).length > 0;
   }
 
   /** Marks sites active in a network green - on "all" for any network, else only
@@ -1269,10 +1282,8 @@ export class FrqmapComponent implements OnInit {
    *  a page never turns green because of another technology. Call after new
    *  statuses, sites or type. */
   private applyNetworkStatus(): void {
-    const type = String(this.selectedType ?? 'null').toLowerCase();
     for (const feature of (this.siteVectorSource?.getFeatures() ?? []) as Feature<any>[]) {
-      const online = this.statusesFor(feature.get('site')).some((s) =>
-        s.active && (type === 'null' || s.technology === type));
+      const online = this.hasActiveStatus(feature.get('site'));
       if (!!feature.get('online') !== online) {
         feature.set('online', online);
         this.styleRepeater(feature);

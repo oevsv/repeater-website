@@ -6,9 +6,9 @@
 
   <!-- Tooltip over a repeater with network status (positioned by an OpenLayers
        overlay, see frqmap.component.ts). -->
-  <div #statusTip class="status-tip" [hidden]="!hoverSite">
+  <div #statusTip class="status-tip" [hidden]="!hoverStatusesFor(hoverSite).length">
     <div class="status-tip-site">{{ hoverSite?.site_name }}</div>
-    <ng-container *ngTemplateOutlet="networkStatusList; context: { $implicit: statusesFor(hoverSite) }"></ng-container>
+    <ng-container *ngTemplateOutlet="networkStatusList; context: { $implicit: hoverStatusesFor(hoverSite) }"></ng-container>
   </div>
 
   <!-- Network status lines (OE-Link, ...), used by the tooltip and the details panel. -->
@@ -103,9 +103,9 @@
     <div class="mdetails-body" [hidden]="detailsCollapsed">
       <ng-container *ngIf="selectedSite">
         <!-- Network status on top of the site details. -->
-        <div *ngIf="statusesFor(selectedSite).length" class="net-status-block"
+        <div *ngIf="pageStatusesFor(selectedSite).length" class="net-status-block"
              [class.inactive]="!hasActiveStatus(selectedSite)">
-          <ng-container *ngTemplateOutlet="networkStatusList; context: { $implicit: statusesFor(selectedSite) }"></ng-container>
+          <ng-container *ngTemplateOutlet="networkStatusList; context: { $implicit: pageStatusesFor(selectedSite) }"></ng-container>
         </div>
 
         <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">

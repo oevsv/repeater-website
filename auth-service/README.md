@@ -192,7 +192,7 @@ calls `/me`; authenticated data calls go to `/api/secure/…`.
 
 After every successful login `/authorized` calls PostgREST's
 `POST /rpc/user_login` (database function `api.user_login()`, migration
-`repeater-db/postgres/migrations/2026-11-01_users.sql`) with a token minted
+`repeater-db/postgres/migrations/2026-11-01_04_users.sql`) with a token minted
 as for `/api/secure`. The function takes the user from that token (`sub`,
 `callsign`) and creates or updates the row in `public.users`
 (`id` = `sub`, `callsign`, `first_seen`, `last_seen`). It returns the row; its
