@@ -1,19 +1,22 @@
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { AppComponent } from './app.component';
 
+import { AppComponent } from './app.component';
+import { AppModule } from './app.module';
+
+// AppModule, not single declarations: the tests are compiled ahead of time and
+// need the module that declares the components (pipes, child components).
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        RouterTestingModule
+      imports: [AppModule],
+      providers: [
+        provideZonelessChangeDetection(), // the tests run without zone.js
+        provideHttpClient(),
+        provideHttpClientTesting(), // no backend: requests to /api stay pending
       ],
-      declarations: [
-        AppComponent
-      ],
-      // AppComponent's template hosts <app-frqmap>, which isn't declared here.
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
   });
 
