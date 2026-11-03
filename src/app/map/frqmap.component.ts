@@ -13,9 +13,9 @@ import sampleResponseToReq1, {
 import Map from "ol/Map";
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
+import LayerGroup from 'ol/layer/Group';
 import TileGrid from "ol/tilegrid/TileGrid";
 import WMTSGrid from "ol/tilegrid/WMTS";
-import OSM from 'ol/source/OSM';
 import WMTSSource, {optionsFromCapabilities} from 'ol/source/WMTS'
 import * as olProj from "ol/proj";
 import {Extent, boundingExtent} from "ol/extent";
@@ -47,6 +47,43 @@ const baseMapCapabilities: string = "assets/WMTSCapabilities.xml";
  *  prerender) left tiles misplaced or missing in Chrome on Android, and Safari
  *  before 18 ignores it. */
 const BASEMAP_CLASS = 'ol-layer basemap-layer';
+/** Repeater data licence, shown with every basemap's attribution. */
+const DATA_ATTRIBUTION = 'Repeaterdaten CC-BY4.0.';
+const BASEMAP_AT_ATTRIBUTION = 'Grundkarte &copy; <a href="https://www.basemap.at/">basemap.at</a>, ' + DATA_ATTRIBUTION;
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, ' + DATA_ATTRIBUTION;
+
+/** One choice of the basemap switcher: layers of the basemap.at WMTS (from the
+ *  capabilities) or an XYZ tile URL (OSM etc.), bottom first. */
+interface Basemap {
+  id: string;
+  label: string;
+  wmts?: { layer: string; matrixSet: string }[];
+  xyz?: { url: string; attributions: string; maxZoom: number };
+}
+
+const BASEMAP_AT = (layer: string, matrixSet = 'google3857') => ({ layer, matrixSet });
+/** Basemaps of the switcher; the first one is the default. basemap.at covers
+ *  Austria only, OSM / OpenTopoMap also the neighbouring countries. */
+const BASEMAPS: Basemap[] = [
+  { id: 'basemap', label: $localize`:@@basemapStandard:Base map`, wmts: [BASEMAP_AT('bmaphidpi')] },
+  // Aerial photo with the basemap.at labels (places, roads) on top.
+  { id: 'ortho', label: $localize`:@@basemapOrtho:Aerial photo (orthophoto)`,
+    wmts: [BASEMAP_AT('bmaporthofoto30cm'), BASEMAP_AT('bmapoverlay')] },
+  { id: 'terrain', label: $localize`:@@basemapTerrain:Terrain`,
+    wmts: [BASEMAP_AT('bmapgelaende', 'google3857_0-17'), BASEMAP_AT('bmapoverlay')] },
+  { id: 'surface', label: $localize`:@@basemapSurface:Surface model`,
+    wmts: [BASEMAP_AT('bmapoberflaeche', 'google3857_0-17'), BASEMAP_AT('bmapoverlay')] },
+  { id: 'grey', label: $localize`:@@basemapGrey:Base map grey`, wmts: [BASEMAP_AT('bmapgrau')] },
+  { id: 'osm', label: 'OpenStreetMap',
+    xyz: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attributions: OSM_ATTRIBUTION, maxZoom: 19 } },
+  { id: 'opentopomap', label: 'OpenTopoMap',
+    xyz: { url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png', maxZoom: 17,
+      attributions: 'Kartendaten: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM | ' +
+        'Kartendarstellung: &copy; <a href="https://opentopomap.org/">OpenTopoMap</a> (CC-BY-SA), ' + DATA_ATTRIBUTION } },
+];
+/** localStorage: chosen basemap id and greyscale on/off. */
+const BASEMAP_KEY = 'frqmap.basemap';
+const BASEMAP_GREY_KEY = 'frqmap.basemapGrey';
 const parser = new WMTSCapabilities();
 
 /** Tight bounding box of Austria (EPSG:3857), from its westernmost point near the
@@ -326,6 +363,15 @@ export class FrqmapComponent implements OnInit {
    *  callsign and the network's technology (OE-Link -> an FM transmitter). */
   private siteTransmitters = new Set<string>();
   @ViewChild('statusTip', { static: true }) private statusTip!: ElementRef<HTMLElement>;
+  @ViewChild('basemapSwitcher', { static: true }) private basemapSwitcher!: ElementRef<HTMLElement>;
+  /** Basemap switcher: the choices, the current one, greyscale, panel open. */
+  readonly basemaps = BASEMAPS;
+  basemapId = FrqmapComponent.load(BASEMAP_KEY) ?? BASEMAPS[0].id;
+  basemapGrey = FrqmapComponent.load(BASEMAP_GREY_KEY) !== '0';
+  basemapsOpen = false;
+  /** Bottom layer of the map, holding the layers of the chosen basemap. */
+  private readonly basemapGroup = new LayerGroup();
+  private wmtsCapabilities: any = null;
   private statusTipOverlay: Overlay | null = null;
 
   constructor(
@@ -434,7 +480,9 @@ export class FrqmapComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.filtersOpen) {
+    if (this.basemapsOpen) {
+      this.basemapsOpen = false;
+    } else if (this.filtersOpen) {
       this.filtersOpen = false;
     } else if (this.hasDetails) {
       this.closeDetails();
@@ -483,7 +531,8 @@ export class FrqmapComponent implements OnInit {
         // North stays up: a two-finger pinch to zoom would otherwise also rotate.
         enableRotation: false
       }),
-      layers: [],
+      // The basemap is always the bottom layer; switching replaces its content.
+      layers: [this.basemapGroup],
       target: 'map',
       // Sharp on phones (pixel ratio 2.6-3.5), capped at 2: a full-screen canvas
       // at 3x needs more than twice the memory and drawing time for little gain.
@@ -493,42 +542,22 @@ export class FrqmapComponent implements OnInit {
     //http://bboxfinder.com/#46.346928,9.404297,49.095452,17.144165
     this.fitAustria();
 
-    //add basemap layers
-    this.http.get(baseMapCapabilities, {
-      observe: 'body',
-      responseType: 'text'
-    })
+    // Basemap switcher (an OL control, so it stacks with zoom / locate).
+    this.map.addControl(new Control({ element: this.basemapSwitcher.nativeElement }));
+    // basemap.at layers come from its WMTS capabilities (a copy in assets).
+    this.http.get(baseMapCapabilities, { observe: 'body', responseType: 'text' })
       .subscribe({
         next: (text) => {
           try {
-            const result = parser.read(text);
-            const options = optionsFromCapabilities(result, {
-              layer: 'bmaphidpi',
-              matrixSet: 'google3857'
-            });
-            // optionsFromCapabilities returns null if the layer/matrixSet is not
-            // found (e.g. the request returned HTML, not the capabilities XML).
-            if (!options) {
-              throw new Error('optionsFromCapabilities returned null (capabilities not parsed as expected)');
-            }
-            options.attributions = 'Grundkarte &copy; <a href="//www.basemap.at/">' +
-              'basemap.at</a>, Repeaterdaten CC-BY4.0.'
-
-            const layer = new TileLayer({
-              source: new WMTSSource(options),
-              className: BASEMAP_CLASS,
-              opacity: 1,
-              visible: true
-            })
-            this.map.getLayers().insertAt(0, layer)
+            this.wmtsCapabilities = parser.read(text);
           } catch (err) {
-            console.error('basemap: failed to build WMTS layer from capabilities, falling back to OSM', err);
-            this.addFallbackBasemap();
+            console.error('basemap: failed to parse the WMTS capabilities, falling back to OSM', err);
           }
+          this.applyBasemap();
         },
         error: (err) => {
           console.error('basemap: failed to load WMTS capabilities, falling back to OSM', err);
-          this.addFallbackBasemap();
+          this.applyBasemap();
         }
       });
 
@@ -575,6 +604,7 @@ export class FrqmapComponent implements OnInit {
     this.dumpSiteInfosForFiltering();
 
     this.map.on('click', (e) => {
+      this.basemapsOpen = false;
       let coordsWgs84 = olProj.transform(e.coordinate,'EPSG:3857', 'EPSG:4326');
       console.log(e.coordinate, coordsWgs84);
       this.clickedLong = coordsWgs84[0];
@@ -703,22 +733,65 @@ export class FrqmapComponent implements OnInit {
     });
   }
 
-  /** Fallback basemap (desaturated OSM) used when the basemap.at WMTS cannot be
-   *  loaded, so the map never renders without a background layer. */
-  private addFallbackBasemap(): void {
-    // Guard against adding it twice (e.g. error + a retry).
-    if (this.map.getLayers().getLength() > 0 &&
-        (this.map.getLayers().item(0) as TileLayer<TileSource>)?.get('isBasemap')) {
-      return;
+  /** Basemap switcher: shows another basemap and remembers the choice. */
+  selectBasemap(id: string): void {
+    this.basemapId = id;
+    this.store(BASEMAP_KEY, id);
+    this.applyBasemap();
+  }
+
+  /** Basemap switcher: basemap in grey tones (default) or in colour. The repeater
+   *  markers and the coverage stand out more on grey. */
+  setBasemapGrey(grey: boolean): void {
+    this.basemapGrey = grey;
+    this.store(BASEMAP_GREY_KEY, grey ? '1' : '0');
+  }
+
+  /** Puts the layers of the chosen basemap into the basemap group. A basemap.at
+   *  choice without capabilities (failed to load) falls back to OpenStreetMap. */
+  private applyBasemap(): void {
+    let basemap = BASEMAPS.find((b) => b.id === this.basemapId) ?? BASEMAPS[0];
+    let layers: TileLayer<TileSource>[] = [];
+    if (basemap.wmts) {
+      try {
+        layers = basemap.wmts.map((w) => {
+          const options = this.wmtsCapabilities && optionsFromCapabilities(this.wmtsCapabilities, w);
+          if (!options) {
+            throw new Error(`basemap.at layer ${w.layer} / ${w.matrixSet} not in the capabilities`);
+          }
+          options.attributions = BASEMAP_AT_ATTRIBUTION;
+          return new TileLayer({ source: new WMTSSource(options), className: BASEMAP_CLASS });
+        });
+      } catch (err) {
+        console.error('basemap: falling back to OSM', err);
+        basemap = BASEMAPS.find((b) => b.id === 'osm')!;
+      }
     }
-    const layer = new TileLayer({
-      source: new OSM(),
-      className: BASEMAP_CLASS,
-      opacity: 1,
-      visible: true
-    });
-    layer.set('isBasemap', true);
-    this.map.getLayers().insertAt(0, layer);
+    if (basemap.xyz) {
+      layers = [new TileLayer({
+        source: new XYZ({ url: basemap.xyz.url, attributions: basemap.xyz.attributions, maxZoom: basemap.xyz.maxZoom,
+          crossOrigin: 'anonymous' }),
+        className: BASEMAP_CLASS,
+      })];
+    }
+    this.basemapGroup.getLayers().clear();
+    this.basemapGroup.getLayers().extend(layers);
+  }
+
+  private static load(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null; // storage unavailable (private mode etc.)
+    }
+  }
+
+  private store(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // storage unavailable: the choice just isn't remembered
+    }
   }
 
   private loadOptions() {

@@ -1,8 +1,33 @@
 <!-- Full-screen map. Everything else floats on top of it as small, collapsible
      widgets, so the whole viewport stays pannable / pinch-zoomable. -->
-<div class="map-page" [class.has-details]="hasDetails" [class.details-collapsed]="detailsCollapsed">
+<div class="map-page" [class.has-details]="hasDetails" [class.details-collapsed]="detailsCollapsed"
+     [class.basemap-grey]="basemapGrey">
 
   <div id="map" class="map-canvas"></div>
+
+  <!-- Basemap switcher: an OpenLayers control (stacks with zoom / locate, styled
+       in styles.scss); the panel opens to its left. -->
+  <div #basemapSwitcher class="basemap-switcher ol-unselectable ol-control">
+    <button type="button" (click)="basemapsOpen = !basemapsOpen" [class.active]="basemapsOpen"
+            [attr.aria-expanded]="basemapsOpen" title="Background map" i18n-title="@@basemapChoose"
+            aria-label="Background map" i18n-aria-label="@@basemapChoose">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+      </svg>
+    </button>
+    <div *ngIf="basemapsOpen" class="basemap-panel" role="radiogroup" aria-label="Background map"
+         i18n-aria-label="@@basemapChoose">
+      <label *ngFor="let b of basemaps" class="basemap-option" [class.current]="b.id === basemapId">
+        <input type="radio" name="basemap" [checked]="b.id === basemapId" (change)="selectBasemap(b.id)">
+        {{ b.label }}
+      </label>
+      <label class="basemap-option basemap-grey-option">
+        <input type="checkbox" [checked]="basemapGrey" (change)="setBasemapGrey($any($event.target).checked)">
+        <ng-container i18n="@@basemapGreyscale">Grey tones</ng-container>
+      </label>
+    </div>
+  </div>
 
   <!-- Tooltip over a repeater: site name, plus its network status if active
        (positioned by an OpenLayers overlay, see frqmap.component.ts). -->

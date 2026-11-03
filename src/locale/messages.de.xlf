@@ -725,6 +725,27 @@
       <trans-unit id="seoSite" datatype="html">
         <source>Amateurfunk-Relaisstandort <x id="SITE" equiv-text="${site.site_name}"/> (<x id="DETAILS" equiv-text="${details}"/>): <x id="CALLSIGNS" equiv-text="${calls}"/> – <x id="MODES" equiv-text="${modes}"/>. Frequenzen, Netzwerkstatus und Funkabdeckung auf der ÖVSV-Repeaterkarte.</source>
       </trans-unit>
+      <trans-unit id="basemapChoose" datatype="html">
+        <source>Kartenhintergrund</source>
+      </trans-unit>
+      <trans-unit id="basemapStandard" datatype="html">
+        <source>Basiskarte</source>
+      </trans-unit>
+      <trans-unit id="basemapOrtho" datatype="html">
+        <source>Luftbild (Orthofoto)</source>
+      </trans-unit>
+      <trans-unit id="basemapTerrain" datatype="html">
+        <source>Gelände</source>
+      </trans-unit>
+      <trans-unit id="basemapSurface" datatype="html">
+        <source>Oberflächenmodell</source>
+      </trans-unit>
+      <trans-unit id="basemapGrey" datatype="html">
+        <source>Basiskarte grau</source>
+      </trans-unit>
+      <trans-unit id="basemapGreyscale" datatype="html">
+        <source>Graustufen</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

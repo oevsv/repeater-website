@@ -318,8 +318,9 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
     left: auto;
     bottom: auto;
     width: $details-width;
-    // Leaves the bottom-right free for the zoom / locate controls.
-    max-height: calc(100% - var(--top) - 56px - var(--ctrl-bottom) - 140px);
+    // Leaves the bottom-right free for the basemap / zoom / locate controls
+    // (40 + 8 + 80 + 8 + 40 px, see styles.scss).
+    max-height: calc(100% - var(--top) - 56px - var(--ctrl-bottom) - 188px);
     border-radius: $radius;
     box-shadow: $shadow;
     padding-bottom: 0;

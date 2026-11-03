@@ -36,8 +36,8 @@
    bottom-right; --ctrl-bottom is set on .map-page (frqmap.component.scss) and
    moves them out of the way of the mobile bottom sheet. */
 .map-page {
-  // Basemap in grey tones (see BASEMAP_CLASS in frqmap.component.ts).
-  .basemap-layer canvas {
+  // Basemap in grey tones, switchable (see BASEMAP_CLASS in frqmap.component.ts).
+  &.basemap-grey .basemap-layer canvas {
     filter: grayscale(100%);
   }
 
@@ -64,7 +64,8 @@
   }
 
   .ol-zoom,
-  .center-user-location {
+  .center-user-location,
+  .basemap-switcher {
     top: auto;
     left: auto;
     right: max(8px, env(safe-area-inset-right));
@@ -88,6 +89,68 @@
     }
   }
 
+  // OL gives its control container an inline z-index: 0, which would keep the
+  // basemap panel under the details card; without it, the switcher's own
+  // z-index counts on .map-page.
+  .ol-overlaycontainer-stopevent {
+    z-index: auto !important;
+  }
+
+  // Above zoom (desktop) / locate (phones, no zoom buttons, see below). Over the
+  // details card (z-index 30), so the open panel isn't hidden by it.
+  .basemap-switcher {
+    z-index: 31;
+    bottom: calc(var(--ctrl-bottom) + 136px);
+
+    button.active {
+      background: #e6f3fd;
+      color: #008CEA;
+    }
+  }
+
+  .basemap-panel {
+    position: absolute;
+    right: 48px;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 190px;
+    padding: 6px 0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.08);
+    font-size: 0.95rem;
+  }
+
+  .basemap-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    color: #333;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+      background: #f2f2f2;
+    }
+
+    &.current {
+      font-weight: 600;
+    }
+
+    input {
+      margin: 0;
+      accent-color: #008CEA;
+    }
+  }
+
+  .basemap-grey-option {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+  }
+
   .ol-attribution {
     right: auto;
     left: max(8px, env(safe-area-inset-left));
@@ -106,6 +169,10 @@
   @media (max-width: 639px) {
     .ol-zoom {
       display: none;
+    }
+
+    .basemap-switcher {
+      bottom: calc(var(--ctrl-bottom) + 48px);
     }
   }
 }
