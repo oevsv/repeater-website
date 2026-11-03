@@ -26,8 +26,9 @@
   </ng-template>
 
   <!-- Filter bar below the shared navigation: repeater type (selection always
-       visible) and frequency; the funnel folds out the name / call sign search. -->
-  <div class="mbar">
+       visible) and frequency; the funnel folds out the name / call sign search.
+       Not on /site/<callsign>, which shows that one site only. -->
+  <div *ngIf="!sitePage" class="mbar">
     <form class="mbar-card mbar-filter" (submit)="$event.preventDefault()">
       <select *ngIf="formOptions" class="mbar-select" name="statistik_type"
               aria-label="Repeater type" i18n-aria-label="@@repeaterType"

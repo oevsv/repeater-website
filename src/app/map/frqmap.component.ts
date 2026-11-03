@@ -61,6 +61,9 @@ const MOBILE_VISIBLE_SHARE = 0.9;
 /** URL segment for "all repeater types" (/de/all/map); the settings call that
  *  type null, which the component keeps as the string 'null'. */
 const ALL_TYPES_SLUG = 'all';
+/** Height of the navigation alone incl. margin (px): on /site/<callsign>, which
+ *  has no filter bar below it. */
+const NAV_HEIGHT = 64;
 /** /site/<callsign>: width and height (m) of the area shown around the site. */
 const SITE_VIEW_SIZE_M = 5000;
 /** localStorage key remembering that the "tap a repeater" hint was dismissed. */
@@ -241,6 +244,8 @@ export class FrqmapComponent implements OnInit {
   /** /site/<callsign>: callsign whose site is selected and shown once the sites
    *  are drawn; null once done (or on the map pages). */
   private focusCallsign: string | null = null;
+  /** On /site/<callsign>: no filter bar, only that site on the map. */
+  sitePage = false;
   /** A site was shown for /site/<callsign>, so the initial Austria view must not
    *  replace it. */
   private siteFocused = false;
@@ -395,6 +400,7 @@ export class FrqmapComponent implements OnInit {
     this.route.paramMap.subscribe((params) => {
       // /site/<callsign> shows the map with all types, focused on that site.
       const callsign = params.get('callsign');
+      this.sitePage = !!callsign;
       this.focusCallsign = callsign ? callsign.toUpperCase() : null;
       if (callsign && callsign !== this.focusCallsign) {
         this.router.navigate(['/site', this.focusCallsign], { replaceUrl: true });
@@ -403,7 +409,10 @@ export class FrqmapComponent implements OnInit {
       if (this.formOptions) {
         this.applyRouteType();
       }
-      this.focusRequestedSite(); // /site/A -> /site/B: the sites are already drawn
+      // /site/A -> /site/B: only A is on the map, reload all sites to find B.
+      if (this.focusCallsign && this.siteVectorSource) {
+        this.loadSites();
+      }
     });
     this.loadOptions()
     this.initMap()
@@ -836,9 +845,10 @@ export class FrqmapComponent implements OnInit {
   }
 
   /** /site/<callsign>: selects the site with that callsign as a click would
-   *  (details panel open) and shows about 5 km x 5 km around it. A callsign used
-   *  at several sites: the one where it is active in a network, else the first
-   *  by name. Unknown callsign: the map with all types. */
+   *  (details panel open), removes all other sites from the map and shows about
+   *  5 km x 5 km around it. A callsign used at several sites: the one where it is
+   *  active in a network, else the first by name. Unknown callsign: the map with
+   *  all types. */
   private focusRequestedSite(): void {
     const call = this.focusCallsign;
     if (!call || !this.siteVectorSource || !this.siteVectorSource.getFeatures().length) {
@@ -859,6 +869,12 @@ export class FrqmapComponent implements OnInit {
     const site = feature.get('site') as Site;
     const coordinate = (feature.getGeometry() as Point).getCoordinates();
     this.siteFocused = true;
+    // Only this site on the map (before the next render, so the others never show).
+    for (const other of this.siteVectorSource.getFeatures()) {
+      if (other !== feature) {
+        this.siteVectorSource.removeFeature(other);
+      }
+    }
 
     if (this.selectedFeature) {
       this.deselectRepeater(this.selectedFeature);
@@ -1183,13 +1199,14 @@ export class FrqmapComponent implements OnInit {
     }
     const [width, height] = size;
     let free: { left: number; top: number; width: number; height: number };
+    const top = this.sitePage ? NAV_HEIGHT : TOP_BAR_HEIGHT; // no filter bar on /site/...
     if (width >= DESKTOP_BREAKPOINT) {
-      free = { left: 0, top: TOP_BAR_HEIGHT, width: width - DETAILS_CARD_WIDTH, height: height - TOP_BAR_HEIGHT };
+      free = { left: 0, top, width: width - DETAILS_CARD_WIDTH, height: height - top };
     } else {
       // The sheet may not be rendered yet; it takes up to 60% of the height.
       const sheet = document.querySelector('.mdetails') as HTMLElement | null;
       const sheetHeight = sheet?.offsetHeight || height * 0.6;
-      free = { left: 0, top: TOP_BAR_HEIGHT, width, height: Math.max(height - TOP_BAR_HEIGHT - sheetHeight, 1) };
+      free = { left: 0, top, width, height: Math.max(height - top - sheetHeight, 1) };
     }
     // Mercator stretches distances by 1 / cos(latitude).
     const span = SITE_VIEW_SIZE_M / Math.cos(latitude * Math.PI / 180);
