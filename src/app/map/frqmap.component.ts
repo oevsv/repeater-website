@@ -21,7 +21,7 @@ import * as olProj from "ol/proj";
 import {Extent, boundingExtent} from "ol/extent";
 import {HttpClient} from "@angular/common/http";
 import {ActivatedRoute, Router} from "@angular/router";
-import {Title} from "@angular/platform-browser";
+import { SeoService } from '../seo.service';
 import {Source, XYZ} from "ol/source";
 import {Coordinate} from "ol/coordinate";
 import VectorSource from "ol/source/Vector";
@@ -205,6 +205,41 @@ interface Site {
   [key: string]: any
 }
 
+/** Callsigns of a site's active transmitters, upper case, sorted, no gaps. */
+function siteCallsigns(site: Site): string[] {
+  return [...new Set((site.callsigns ?? []).filter((c) => !!c).map((c) => c.toUpperCase()))].sort();
+}
+
+/** Callsign under which a site is linked (/site/<callsign>): the first one no
+ *  other site uses, else the first one. Same rule as api.site_canonical, which
+ *  the sitemap is built from. */
+function canonicalCallsign(site: Site, allSites: Site[]): string | null {
+  const own = siteCallsigns(site);
+  const elsewhere = new Set(allSites.filter((s) => s.site_name !== site.site_name).flatMap(siteCallsigns));
+  return own.find((c) => !elsewhere.has(c)) ?? own[0] ?? null;
+}
+
+/** Description of a site page for search engines and link previews. */
+function siteDescription(site: Site): string {
+  const modes = [
+    site.fm && $localize`:@@fm:FM`,
+    site.dmr && $localize`:@@dmr:DMR`,
+    site.c4fm && $localize`:@@c4fm:C4fm`,
+    site.dstar && $localize`:@@dstar:Dstar`,
+    site.tetra && $localize`:@@tetra:Tetra`,
+    site.beacon && $localize`:@@beacon:Beacon`,
+    site.atv && $localize`:@@atv:ATV`,
+    site.digipeater && $localize`:@@digipeater:Digipeater`,
+  ].filter((m): m is string => !!m).join(', ');
+  const details = [
+    site.locator_short,
+    site.sea_level != null ? `${Math.round(site.sea_level)} m` : '',
+    site.city,
+  ].filter((d) => !!d).join(', ');
+  const calls = siteCallsigns(site).join(', ');
+  return $localize`:@@seoSite:Amateur radio repeater site ${site.site_name}:SITE: (${details}:DETAILS:): ${calls}:CALLSIGNS: – ${modes}:MODES:. Frequencies, network status and coverage on the ÖVSV repeater map.`;
+}
+
 @Component({
   standalone: false,
   selector: 'app-frqmap',
@@ -293,7 +328,7 @@ export class FrqmapComponent implements OnInit {
     private settingsService : SettingsService,
     private route : ActivatedRoute,
     private router : Router,
-    private title : Title
+    private seo : SeoService
   ) { }
 
   /** Most precise locator of the clicked / located point: 20 characters, or 10
@@ -370,9 +405,16 @@ export class FrqmapComponent implements OnInit {
       this.selectedType = type;
       this.loadSites();
     }
-    this.title.setTitle(type === 'null'
-      ? $localize`:@@titleMap:ÖVSV repeater map`
-      : $localize`:@@titleMapType:ÖVSV repeater map – ${option.label}:TYPE:`);
+    if (this.sitePage) {
+      return; // title and description come from focusRequestedSite()
+    }
+    if (type === 'null') {
+      this.seo.setPage($localize`:@@titleMap:ÖVSV repeater map`,
+        $localize`:@@seoMap:Map of all amateur radio repeaters in Austria: FM, DMR, C4FM, D-STAR, TETRA, digipeaters, beacons and ATV with frequencies, network status and coverage.`);
+    } else {
+      this.seo.setPage($localize`:@@titleMapType:ÖVSV repeater map – ${option.label}:TYPE:`,
+        $localize`:@@seoMapType:Map of the ${option.label}:TYPE: amateur radio repeaters in Austria with frequencies, network status and coverage.`);
+    }
   }
 
   dismissHint(): void {
@@ -867,6 +909,7 @@ export class FrqmapComponent implements OnInit {
     }
     const feature = candidates[0];
     const site = feature.get('site') as Site;
+    const canonical = canonicalCallsign(site, this.siteVectorSource.getFeatures().map((f) => f.get('site') as Site));
     const coordinate = (feature.getGeometry() as Point).getCoordinates();
     this.siteFocused = true;
     // Only this site on the map (before the next render, so the others never show).
@@ -887,7 +930,8 @@ export class FrqmapComponent implements OnInit {
 
     this.map.getView().cancelAnimations(); // instead of openSite()'s panning
     this.showAroundSite(coordinate, site.latitude);
-    this.title.setTitle($localize`:@@titleMapType:ÖVSV repeater map – ${site.site_name}:TYPE:`);
+    this.seo.setPage($localize`:@@titleMapType:ÖVSV repeater map – ${site.site_name}:TYPE:`,
+      siteDescription(site), `/site/${canonical ?? call}`);
   }
 
   // obsolete

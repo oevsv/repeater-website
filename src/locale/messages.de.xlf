@@ -710,6 +710,21 @@
       <trans-unit id="titleStatusList" datatype="html">
         <source>Repeaterstatus ÖVSV – <x id="TYPE" equiv-text="${this.label}"/></source>
       </trans-unit>
+      <trans-unit id="seoMap" datatype="html">
+        <source>Karte aller Amateurfunk-Relais (Repeater) in Österreich: FM, DMR, C4FM, D-STAR, TETRA, Digipeater, Baken und ATV mit Frequenzen, Netzwerkstatus und Funkabdeckung.</source>
+      </trans-unit>
+      <trans-unit id="seoMapType" datatype="html">
+        <source>Karte der <x id="TYPE" equiv-text="${option.label}"/>-Amateurfunk-Relais (Repeater) in Österreich mit Frequenzen, Netzwerkstatus und Funkabdeckung.</source>
+      </trans-unit>
+      <trans-unit id="seoList" datatype="html">
+        <source>Liste aller Amateurfunk-Relais, Digipeater, Baken und ATV-Stationen in Österreich mit Frequenzen, CTCSS, Rufzeichen, Standorten und Netzwerken.</source>
+      </trans-unit>
+      <trans-unit id="seoStatusList" datatype="html">
+        <source>Welche <x id="TYPE" equiv-text="${this.label}"/>-Amateurfunk-Relais in Österreich gerade in ihren Netzwerken aktiv sind und wann die anderen zuletzt gesehen wurden.</source>
+      </trans-unit>
+      <trans-unit id="seoSite" datatype="html">
+        <source>Amateurfunk-Relaisstandort <x id="SITE" equiv-text="${site.site_name}"/> (<x id="DETAILS" equiv-text="${details}"/>): <x id="CALLSIGNS" equiv-text="${calls}"/> – <x id="MODES" equiv-text="${modes}"/>. Frequenzen, Netzwerkstatus und Funkabdeckung auf der ÖVSV-Repeaterkarte.</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, Inject, LOCALE_ID } from '@angular/core';
 import { Router } from '@angular/router';
 import { SettingsService } from './map/settings.service';
+import { SeoService } from './seo.service';
 import { STATUS_LIST_TECHNOLOGIES } from './map/repeater-status.service';
 
 @Component({
@@ -16,7 +17,9 @@ export class AppComponent {
   /** One map page per repeater type (/<slug>/map), from the backend settings. */
   mapTypes: { slug: string; label: string }[] = [];
 
-  constructor(private router: Router, @Inject(LOCALE_ID) public locale: string, settings: SettingsService) {
+  // SeoService is created here so it sees the first navigation already.
+  constructor(private router: Router, @Inject(LOCALE_ID) public locale: string, settings: SettingsService,
+              _seo: SeoService) {
     settings.settings$.subscribe((s) => {
       this.mapTypes = s.filter.types.map((t) =>
         // "all" is null in the settings (the map turns it into 'null').

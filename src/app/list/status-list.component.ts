@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Title } from '@angular/platform-browser';
 import { forkJoin } from 'rxjs';
 
 import { RepeaterStatusService, STATUS_LIST_TECHNOLOGIES } from '../map/repeater-status.service';
 import type { NetworkStatus, Transmitter } from '../map/repeater-status.service';
 import { SettingsService } from '../map/settings.service';
+import { SeoService } from '../seo.service';
 
 /** One line: a network status at a site. */
 interface StatusRow extends NetworkStatus {
@@ -41,7 +41,7 @@ export class StatusListComponent implements OnInit {
     private http: HttpClient,
     private statusService: RepeaterStatusService,
     private settings: SettingsService,
-    private title: Title,
+    private seo: SeoService,
   ) {}
 
   get activeCount(): number {
@@ -80,7 +80,8 @@ export class StatusListComponent implements OnInit {
           return; // switched to another list meanwhile
         }
         this.label = settings.filter.types.find((t) => t.type === technology)?.label ?? technology.toUpperCase();
-        this.title.setTitle($localize`:@@titleStatusList:ÖVSV repeater status – ${this.label}:TYPE:`);
+        this.seo.setPage($localize`:@@titleStatusList:ÖVSV repeater status – ${this.label}:TYPE:`,
+          $localize`:@@seoStatusList:Which ${this.label}:TYPE: amateur radio repeaters in Austria are currently active in their networks, and when the others were last seen.`);
         this.rows = buildRows(statuses, transmitters, technology);
         this.loaded = true;
       },

@@ -73,6 +73,23 @@ server {
         proxy_ssl_server_name on;
     }
 
+    # ----------------------------------------------------------------------
+    # Search engines. The sitemap is built by the backend from the live data
+    # (api.sitemap() in repeater-db); PostgREST returns the raw XML only for
+    # Accept: application/xml. Keep /api/ crawlable: crawlers load it to
+    # render the pages.
+    # ----------------------------------------------------------------------
+    location = /robots.txt {
+        default_type text/plain;
+        return 200 "User-agent: *\nAllow: /\n\nSitemap: https://repeater.oevsv.at/sitemap.xml\n";
+    }
+
+    location = /sitemap.xml {
+        proxy_pass         http://127.0.0.1:3000/rpc/sitemap;
+        proxy_set_header   Accept application/xml;
+        expires            1h;
+    }
+
     location /tiles/ {
         proxy_pass         https://repeater.oevsv.at;
         proxy_set_header   Host repeater.oevsv.at;
