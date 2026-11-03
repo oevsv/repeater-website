@@ -41,6 +41,12 @@ import { SettingsService } from './settings.service';
 //const baseUrl : String = "https://repeater.oevsv.at/api"
 const baseUrl : String = "/api"
 const baseMapCapabilities: string = "assets/WMTSCapabilities.xml";
+/** CSS class of the basemap layer. It gives the basemap a canvas of its own,
+ *  which styles.scss renders in grey tones (CSS filter; the repeater markers and
+ *  overlays keep their colours). A canvas 2D filter instead (context.filter in
+ *  prerender) left tiles misplaced or missing in Chrome on Android, and Safari
+ *  before 18 ignores it. */
+const BASEMAP_CLASS = 'ol-layer basemap-layer';
 const parser = new WMTSCapabilities();
 
 /** Tight bounding box of Austria (EPSG:3857), from its westernmost point near the
@@ -479,7 +485,9 @@ export class FrqmapComponent implements OnInit {
       }),
       layers: [],
       target: 'map',
-      pixelRatio: 1
+      // Sharp on phones (pixel ratio 2.6-3.5), capped at 2: a full-screen canvas
+      // at 3x needs more than twice the memory and drawing time for little gain.
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 2)
 
     });
     //http://bboxfinder.com/#46.346928,9.404297,49.095452,17.144165
@@ -508,10 +516,10 @@ export class FrqmapComponent implements OnInit {
 
             const layer = new TileLayer({
               source: new WMTSSource(options),
+              className: BASEMAP_CLASS,
               opacity: 1,
               visible: true
             })
-            this.desaturate(layer);
             this.map.getLayers().insertAt(0, layer)
           } catch (err) {
             console.error('basemap: failed to build WMTS layer from capabilities, falling back to OSM', err);
@@ -705,29 +713,12 @@ export class FrqmapComponent implements OnInit {
     }
     const layer = new TileLayer({
       source: new OSM(),
+      className: BASEMAP_CLASS,
       opacity: 1,
       visible: true
     });
     layer.set('isBasemap', true);
-    this.desaturate(layer);
     this.map.getLayers().insertAt(0, layer);
-  }
-
-  /** Renders a layer in grey tones only (the basemap.at tiles are coloured); the
-   *  repeater markers and overlays keep their colours so they stand out. */
-  private desaturate(layer: TileLayer<TileSource>): void {
-    layer.on('prerender', (event) => {
-      const context = event.context as CanvasRenderingContext2D | undefined;
-      if (context) {
-        context.filter = 'grayscale(100%)';
-      }
-    });
-    layer.on('postrender', (event) => {
-      const context = event.context as CanvasRenderingContext2D | undefined;
-      if (context) {
-        context.filter = 'none';
-      }
-    });
   }
 
   private loadOptions() {

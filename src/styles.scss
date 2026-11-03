@@ -36,6 +36,11 @@
    bottom-right; --ctrl-bottom is set on .map-page (frqmap.component.scss) and
    moves them out of the way of the mobile bottom sheet. */
 .map-page {
+  // Basemap in grey tones (see BASEMAP_CLASS in frqmap.component.ts).
+  .basemap-layer canvas {
+    filter: grayscale(100%);
+  }
+
   .ol-control {
     background: transparent;
     padding: 0;
