@@ -1,0 +1,124 @@
+/* Networks page (/networks); tables look like the status lists. */
+
+$accent: #008CEA;
+$muted: #666;
+
+.networks-intro {
+  margin-top: 0;
+  color: $muted;
+}
+
+.network-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 8px;
+
+  a {
+    padding: 3px 10px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    font-size: 0.9em;
+    text-decoration: none;
+
+    &:hover {
+      border-color: $accent;
+    }
+  }
+
+  .count {
+    color: $muted;
+  }
+}
+
+.network {
+  margin-top: 32px;
+  scroll-margin-top: 72px; // below the sticky navigation
+}
+
+.network-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.network-dashboard::after {
+  content: ' ↗';
+}
+
+.network-meta,
+.network-empty {
+  margin: 4px 0 8px;
+  color: $muted;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.network-table {
+  min-width: 620px;
+
+  th {
+    white-space: nowrap;
+  }
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.muted {
+  color: $muted;
+}
+
+.state {
+  color: $muted;
+
+  &.active {
+    color: #2e7d32; // same as the "aktiv" on the map
+    font-weight: 600;
+  }
+}
+
+// Listed now: marked with the highlighter green of the online map markers.
+tbody tr:not(.inactive) td:first-child {
+  box-shadow: inset 4px 0 0 #39ff14;
+}
+
+.network-unlinked {
+  margin-top: 8px;
+
+  summary {
+    cursor: pointer;
+    color: $muted;
+  }
+
+  // No green mark here: these rows are not links.
+  tbody tr td:first-child {
+    box-shadow: none;
+  }
+}
+
+.candidate {
+  // Angular drops the whitespace between the elements.
+  > * + * {
+    margin-left: 6px;
+  }
+
+  &.unfit {
+    opacity: 0.6;
+  }
+}

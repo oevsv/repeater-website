@@ -746,6 +746,69 @@
       <trans-unit id="basemapGreyscale" datatype="html">
         <source>Graustufen</source>
       </trans-unit>
+      <trans-unit id="titleNetworks" datatype="html">
+        <source>Repeaternetzwerke ÖVSV</source>
+      </trans-unit>
+      <trans-unit id="seoNetworks" datatype="html">
+        <source>Welche österreichischen Amateurfunk-Relais mit welchem Netzwerk verbunden sind (OE-LINK, SVXLink, IPSC2, YCS232, D-STAR, TETRA), mit Knoten, Frequenz und wann sie zuletzt gelistet waren.</source>
+      </trans-unit>
+      <trans-unit id="networksHeading" datatype="html">
+        <source>Repeaternetzwerke</source>
+      </trans-unit>
+      <trans-unit id="networksIntro" datatype="html">
+        <source>Welcher Sender mit welchem Netzwerk verbunden ist. Ein Netzwerkstatus (aktiv / zuletzt aktiv) gehört genau zu dem hier zugeordneten Sender.</source>
+      </trans-unit>
+      <trans-unit id="networksUnlinkedHint" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ unlinkedCount }}"/> gelistete Knoten sind noch keinem Sender zugeordnet (siehe „Nicht zugeordnet“ beim jeweiligen Netzwerk).</source>
+      </trans-unit>
+      <trans-unit id="networksFailed" datatype="html">
+        <source>Die Netzwerke konnten nicht geladen werden.</source>
+      </trans-unit>
+      <trans-unit id="networkDashboard" datatype="html">
+        <source>Dashboard</source>
+      </trans-unit>
+      <trans-unit id="networkLinkedCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ n.linked }}"/> Sender zugeordnet</source>
+      </trans-unit>
+      <trans-unit id="networkListedCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ n.listed_now }}"/> Knoten gerade gelistet</source>
+      </trans-unit>
+      <trans-unit id="networkFrequency" datatype="html">
+        <source>Frequenz</source>
+      </trans-unit>
+      <trans-unit id="networkModes" datatype="html">
+        <source>Betriebsarten</source>
+      </trans-unit>
+      <trans-unit id="networkNode" datatype="html">
+        <source>Knoten</source>
+      </trans-unit>
+      <trans-unit id="networkListed" datatype="html">
+        <source>Gelistet</source>
+      </trans-unit>
+      <trans-unit id="networkNeverListed" datatype="html">
+        <source>nicht gelistet</source>
+      </trans-unit>
+      <trans-unit id="networkNoLinks" datatype="html">
+        <source>Noch kein Sender zugeordnet.</source>
+      </trans-unit>
+      <trans-unit id="networkUnlinked" datatype="html">
+        <source>Nicht zugeordnet (<x id="INTERPOLATION" equiv-text="{{ n.unlinked.length }}"/>)</source>
+      </trans-unit>
+      <trans-unit id="networkReportedFrequency" datatype="html">
+        <source>Gemeldete Frequenz</source>
+      </trans-unit>
+      <trans-unit id="networkCandidates" datatype="html">
+        <source>Sender dieses Rufzeichens</source>
+      </trans-unit>
+      <trans-unit id="networkCandidateLinked" datatype="html">
+        <source>(zugeordnet: <x id="INTERPOLATION" equiv-text="{{ c.linked_node }}"/>)</source>
+      </trans-unit>
+      <trans-unit id="networkCandidateExcluded" datatype="html">
+        <source>(nicht in diesem Netzwerk)</source>
+      </trans-unit>
+      <trans-unit id="navNetworks" datatype="html">
+        <source>Netzwerke</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

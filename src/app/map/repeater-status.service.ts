@@ -27,7 +27,7 @@ export interface NetworkStatus {
 export const TECHNOLOGY_ORDER = ['fm', 'dmr', 'c4fm', 'dstar', 'tetra'];
 
 /** Technologies with a status list (/list/<technology>): those with a network. */
-export const STATUS_LIST_TECHNOLOGIES = ['fm', 'dmr', 'c4fm', 'dstar'];
+export const STATUS_LIST_TECHNOLOGIES = ['fm', 'dmr', 'c4fm', 'dstar', 'tetra'];
 
 /** A transmitter as far as status matching needs it (from /api/trx_type). */
 export interface Transmitter {

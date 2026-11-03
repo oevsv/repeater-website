@@ -46,11 +46,16 @@ export class AppComponent {
     return m ? m[1].toLowerCase() : null;
   }
 
-  /** True on a list page (/list, later e.g. /fm/list). Map pages are full
+  /** True on a list page (/list, /list/fm, /networks). Map pages are full
    *  screen (floating navigation, no footer); list pages get a solid
    *  navigation bar and a footer. */
   get isListPage(): boolean {
-    return /^\/(?:[^/?#]+\/)?list(?:[/?#]|$)/.test(this.router.url);
+    return /^\/(?:(?:[^/?#]+\/)?list|networks)(?:[/?#]|$)/.test(this.router.url);
+  }
+
+  /** True on /networks. */
+  get isNetworksPage(): boolean {
+    return /^\/networks(?:[/?#]|$)/.test(this.router.url);
   }
 
   /** Current page path without the locale prefix (e.g. /fm/map), so the

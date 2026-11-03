@@ -1,0 +1,94 @@
+<div class="uk-section-default uk-section">
+  <div class="uk-container uk-container-xlarge">
+    <h2 i18n="@@networksHeading">Repeater networks</h2>
+    <p class="networks-intro" i18n="@@networksIntro">Which transmitter is linked to which network. A network status (active / last active)
+      belongs to exactly the transmitter linked here.</p>
+    <p *ngIf="loaded && unlinkedCount" class="networks-intro" i18n="@@networksUnlinkedHint">{{ unlinkedCount }} listed
+      nodes are not linked to a transmitter yet (see "Not linked" per network).</p>
+    <p *ngIf="failed" i18n="@@networksFailed">The networks could not be loaded.</p>
+
+    <!-- Jump links to the networks. -->
+    <nav *ngIf="networks.length" class="network-toc">
+      <a *ngFor="let n of networks" [href]="'#network-' + n.id" (click)="$event.preventDefault(); scrollTo(n.id)">
+        {{ n.label }} <span class="count">{{ n.linked }}</span></a>
+    </nav>
+
+    <section *ngFor="let n of networks" class="network" [id]="'network-' + n.id">
+      <header class="network-head">
+        <h3>{{ n.label }}</h3>
+        <a *ngIf="n.url" class="network-dashboard" [href]="n.url" target="_blank" rel="noopener"
+           i18n="@@networkDashboard">Dashboard</a>
+      </header>
+      <p class="network-meta">
+        <span>{{ modes(n.technologies) }}</span> ·
+        <span i18n="@@networkLinkedCount">{{ n.linked }} transmitters linked</span> ·
+        <span i18n="@@networkListedCount">{{ n.listed_now }} nodes listed now</span>
+      </p>
+
+      <div *ngIf="n.links.length" class="table-container">
+        <table class="uk-table uk-table-small uk-table-divider uk-table-hover network-table">
+          <thead>
+            <tr>
+              <th i18n="@@listSite">Site</th>
+              <th i18n="@@listCallsign">Call sign</th>
+              <th i18n="@@networkFrequency">Frequency</th>
+              <th i18n="@@networkModes">Modes</th>
+              <th i18n="@@networkNode">Node</th>
+              <th i18n="@@networkListed">Listed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let l of n.links" [class.inactive]="!l.listed_now">
+              <td><a [routerLink]="['/site', l.callsign]">{{ l.site_name }}</a></td>
+              <td class="nowrap">{{ l.callsign }}</td>
+              <td class="nowrap">{{ l.frequency_tx | number: '1.3-4' }}</td>
+              <td>{{ modes(l.technologies) }}</td>
+              <td class="nowrap mono">{{ l.node }}</td>
+              <td class="state nowrap" [class.active]="l.listed_now">
+                <ng-container *ngIf="l.listed_now" i18n="@@netActive">active</ng-container>
+                <ng-container *ngIf="!l.listed_now && l.last_listed"><ng-container
+                  i18n="@@netLastActive">last active</ng-container> {{ l.last_listed | date: 'short' }}</ng-container>
+                <ng-container *ngIf="!l.last_listed" i18n="@@networkNeverListed">not listed</ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="!n.links.length" class="network-empty" i18n="@@networkNoLinks">No transmitter linked yet.</p>
+
+      <!-- Work list: nodes listed by the network, not linked to a transmitter. -->
+      <details *ngIf="n.unlinked.length" class="network-unlinked">
+        <summary i18n="@@networkUnlinked">Not linked ({{ n.unlinked.length }})</summary>
+        <div class="table-container">
+          <table class="uk-table uk-table-small uk-table-divider network-table">
+            <thead>
+              <tr>
+                <th i18n="@@networkNode">Node</th>
+                <th i18n="@@networkReportedFrequency">Reported frequency</th>
+                <th i18n="@@networkListed">Listed</th>
+                <th i18n="@@networkCandidates">Transmitters of this call sign</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of n.unlinked">
+                <td class="nowrap mono">{{ u.node }}</td>
+                <td class="nowrap">{{ u.node_frequency | number: '1.3-4' }}</td>
+                <td class="nowrap">{{ u.last_listed | date: 'short' }}</td>
+                <td>
+                  <div *ngFor="let c of u.candidates" class="candidate" [class.unfit]="!c.fits || c.excluded">
+                    <a [routerLink]="['/site', u.callsign]">{{ c.site_name }}</a>
+                    <span>{{ c.frequency_tx | number: '1.3-4' }}</span>
+                    <span class="muted">{{ modes(c.technologies) }}</span>
+                    <span class="muted mono">#{{ c.trx_uid }}</span>
+                    <span *ngIf="c.linked_node" class="muted" i18n="@@networkCandidateLinked">(linked: {{ c.linked_node }})</span>
+                    <span *ngIf="c.excluded" class="muted" i18n="@@networkCandidateExcluded">(not in this network)</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+  </div>
+</div>
