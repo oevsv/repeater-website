@@ -177,6 +177,11 @@ const REPEATER_BG_ONLINE: DiscColor = { color: '#39ff14', opacity: 1 };
 /** Tower and waves on the highlighter green disc: dark, white/green would vanish. */
 const ONLINE_FOREGROUND = '#1a1a1a';
 
+/** Ring around the disc of a repeater active on OE-Link, the OEVSV's own FM
+ *  network, so it stands out from the other FM networks (SVXLink, ...). */
+const OELINK_NETWORK = 'OE-LINK';
+const OELINK_RING = '#1565c0';
+
 /** Resting colours of the tower / transmission elements. */
 const TOWER_DEFAULT = '#ffffff';
 const TRANSMISSION_DEFAULT = '#00c853';
@@ -186,9 +191,15 @@ const REPEATER_MARKER_SCALE = 0.15;
 
 /** Builds the repeater tower marker SVG with the three colourable elements
  *  inlined. */
-function repeaterMarkerSvg(background: DiscColor, tower: string, transmission: string): string {
+function repeaterMarkerSvg(background: DiscColor, tower: string, transmission: string, ring?: string): string {
+  // With a ring the canvas grows by 16 units on each side, so the disc keeps its
+  // size on the map and the ring (white gap, then blue) lies around it; the icon
+  // stays centred.
   return (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">' +
+    (ring
+      ? '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="-16 -16 160 160">' +
+        '<circle cx="64" cy="64" r="71" fill="#fff" stroke="' + ring + '" stroke-width="16"/>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">') +
     // background disc
     '<circle cx="64" cy="64" r="62" fill="' + background.color +
       '" fill-opacity="' + background.opacity + '"/>' +
@@ -211,8 +222,8 @@ function repeaterMarkerSvg(background: DiscColor, tower: string, transmission: s
 }
 
 /** OpenLayers style for a repeater marker with the given element colours. */
-function repeaterStyle(background: DiscColor, tower: string, transmission: string): Style {
-  const svg = repeaterMarkerSvg(background, tower, transmission);
+function repeaterStyle(background: DiscColor, tower: string, transmission: string, ring?: string): Style {
+  const svg = repeaterMarkerSvg(background, tower, transmission, ring);
   return new Style({
     image: new Icon({
       anchor: [0.5, 0.5],
@@ -1415,7 +1426,8 @@ export class FrqmapComponent implements OnInit {
   }
 
   /** (Re)applies a repeater feature's current colours to its style. The disc is
-   *  blue when selected, green when active in a network, grey otherwise; the
+   *  blue when selected, green when active in a network, grey otherwise, with a
+   *  blue ring when active on OE-Link; the
    *  tower and transmission colours come from the feature's own state. Call
    *  after changing any colour property. */
   private styleRepeater(feature: Feature<any>): void {
@@ -1424,7 +1436,7 @@ export class FrqmapComponent implements OnInit {
       : onlineDisc ? REPEATER_BG_ONLINE : REPEATER_BG_DEFAULT;
     const tower = onlineDisc ? ONLINE_FOREGROUND : feature.get('towerColor') ?? TOWER_DEFAULT;
     const transmission = onlineDisc ? ONLINE_FOREGROUND : feature.get('txColor') ?? TRANSMISSION_DEFAULT;
-    feature.setStyle(repeaterStyle(background, tower, transmission));
+    feature.setStyle(repeaterStyle(background, tower, transmission, feature.get('oelink') ? OELINK_RING : undefined));
   }
 
   /** Marks a repeater selected (blue disc). */
@@ -1503,14 +1515,19 @@ export class FrqmapComponent implements OnInit {
   }
 
   /** Marks sites active in a network green - on "all" for any network, else only
-   *  for networks of the shown technology (FM page: OE-Link, DMR page: IPSC2), so
-   *  a page never turns green because of another technology. Call after new
-   *  statuses, sites or type. */
+   *  for networks of the shown technology (FM page: OE-Link, SVXLink, DMR page:
+   *  IPSC2), so a page never turns green because of another technology - and
+   *  those active on OE-Link with a blue ring. Call after new statuses, sites or
+   *  type. */
   private applyNetworkStatus(): void {
     for (const feature of (this.siteVectorSource?.getFeatures() ?? []) as Feature<any>[]) {
-      const online = this.hasActiveStatus(feature.get('site'));
-      if (!!feature.get('online') !== online) {
+      const active = this.hoverStatusesFor(feature.get('site'));
+      const online = active.length > 0;
+      // Blue ring: active on OE-Link (shown on "all" and FM, like the green).
+      const oelink = active.some((s) => s.network === OELINK_NETWORK);
+      if (!!feature.get('online') !== online || !!feature.get('oelink') !== oelink) {
         feature.set('online', online);
+        feature.set('oelink', oelink);
         this.styleRepeater(feature);
       }
     }
