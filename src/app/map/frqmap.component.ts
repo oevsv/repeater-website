@@ -376,7 +376,8 @@ export class FrqmapComponent implements OnInit {
   /** Basemap switcher: the choices, the current one, greyscale, panel open. */
   readonly basemaps = BASEMAPS;
   basemapId = FrqmapComponent.load(BASEMAP_KEY) ?? BASEMAPS[0].id;
-  basemapGrey = FrqmapComponent.load(BASEMAP_GREY_KEY) !== '0';
+  /** Grey tones only if the user switched them on (default: colour). */
+  basemapGrey = FrqmapComponent.load(BASEMAP_GREY_KEY) === '1';
   basemapsOpen = false;
   /** Bottom layer of the map, holding the layers of the chosen basemap. */
   private readonly basemapGroup = new LayerGroup();
@@ -749,8 +750,8 @@ export class FrqmapComponent implements OnInit {
     this.applyBasemap();
   }
 
-  /** Basemap switcher: basemap in grey tones (default) or in colour. The repeater
-   *  markers and the coverage stand out more on grey. */
+  /** Basemap switcher: basemap in colour (default) or in grey tones, on which
+   *  the repeater markers and the coverage stand out more. */
   setBasemapGrey(grey: boolean): void {
     this.basemapGrey = grey;
     this.store(BASEMAP_GREY_KEY, grey ? '1' : '0');
