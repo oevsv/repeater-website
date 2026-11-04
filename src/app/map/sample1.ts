@@ -94,7 +94,9 @@ export interface TrxInformation {
   dstar_rpt1: string,
   dstar_rpt2: string,
   other_mode_name: string,
-  comment: string
+  comment: string,
+  /** trx.uid: matches the transmitter's network status (api.trx_status). */
+  trx_uid: number
 }
 
 

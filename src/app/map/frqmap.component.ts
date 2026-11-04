@@ -34,7 +34,7 @@ import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
-import { NetworkStatus, RepeaterStatusService, TECHNOLOGY_ORDER, transmitterIndex, transmitterKey } from './repeater-status.service';
+import { RepeaterStatusService, TECHNOLOGY_ORDER, TrxStatus } from './repeater-status.service';
 import { SettingsService } from './settings.service';
 
 
@@ -364,15 +364,13 @@ export class FrqmapComponent implements OnInit {
 
   @ViewChild('nameInput') private nameInput?: ElementRef<HTMLInputElement>;
 
-  /** Network status (OE-Link, ...) by callsign, from RepeaterStatusService.
-   *  (A plain object: "Map" is OpenLayers' map class in this file.) */
-  private networkStatus: Record<string, NetworkStatus[]> = {};
+  /** Network status per transmitter (OE-Link, ...) by site name, from
+   *  RepeaterStatusService (api.trx_status: only the transmitter linked to a
+   *  network node gets its status). (A plain object: "Map" is OpenLayers' map
+   *  class in this file.) */
+  private networkStatus: Record<string, TrxStatus[]> = {};
   /** Site under the mouse, shown in a tooltip (name, plus its active network status). */
   hoverSite: Site | null = null;
-  /** "site|CALLSIGN|technology" of every active transmitter (from trxInfoDump):
-   *  a network status counts for a site only if it has a transmitter with that
-   *  callsign and the network's technology (OE-Link -> an FM transmitter). */
-  private siteTransmitters = new Set<string>();
   @ViewChild('statusTip', { static: true }) private statusTip!: ElementRef<HTMLElement>;
   @ViewChild('basemapSwitcher', { static: true }) private basemapSwitcher!: ElementRef<HTMLElement>;
   /** Basemap switcher: the choices, the current one, greyscale, panel open. */
@@ -1136,8 +1134,6 @@ export class FrqmapComponent implements OnInit {
       .subscribe((val) => {
         if (val.length > 0) {
           this.trxInfoDump = val
-          this.siteTransmitters = transmitterIndex(val as any[]);
-          this.applyNetworkStatus();
           if (this.sitesWaitingForTransmitters) {
             this.sitesWaitingForTransmitters = false;
             this.loadSites();
@@ -1471,47 +1467,49 @@ export class FrqmapComponent implements OnInit {
   /** Subscribes to the network status poll (every 5 minutes, see
    *  RepeaterStatusService) and recolours the markers. */
   private startStatusPolling(): void {
-    this.statusService.poll().subscribe((statuses) => {
-      const byCallsign: Record<string, NetworkStatus[]> = {};
+    this.statusService.pollTrx().subscribe((statuses) => {
+      const bySite: Record<string, TrxStatus[]> = {};
       for (const status of statuses) {
-        const call = status.callsign.toUpperCase();
-        (byCallsign[call] ??= []).push(status);
+        (bySite[status.site_name] ??= []).push(status);
       }
-      this.networkStatus = byCallsign;
+      this.networkStatus = bySite;
       this.applyNetworkStatus();
     });
   }
 
-  /** Network status entries of a site's callsigns (empty if none), only for
-   *  networks whose technology the site has a transmitter for with that
-   *  callsign (see siteTransmitters); FM first, then DMR, ... */
-  statusesFor(site: Site | null): NetworkStatus[] {
-    if (!site) {
-      return [];
-    }
-    return (site.callsigns ?? [])
-      .flatMap((c) => (this.networkStatus[c.toUpperCase()] ?? []).filter((s) =>
-        this.siteTransmitters.has(transmitterKey(site.site_name, c, s.technology))))
-      .sort((a, b) => technologyRank(a.technology) - technologyRank(b.technology)
-        || a.network.localeCompare(b.network) || a.callsign.localeCompare(b.callsign));
+  /** Network status entries of a site's transmitters (empty if none); FM
+   *  first, then DMR, ... */
+  statusesFor(site: Site | null): TrxStatus[] {
+    return site ? sortStatuses(this.networkStatus[site.site_name] ?? []) : [];
   }
 
-  /** The site's network status entries for the shown page: all of them on
-   *  "all", else only the networks of that technology (FM page: OE-Link, DMR
-   *  page: IPSC2). Used by the details panel and the marker colour. */
-  pageStatusesFor(site: Site | null): NetworkStatus[] {
+  /** Whether a status belongs on the shown page: all on "all", else only links
+   *  about that technology (FM page: OE-Link, SVXLink on FM transmitters). */
+  private onPage(status: TrxStatus): boolean {
     const type = String(this.selectedType ?? 'null').toLowerCase();
-    return this.statusesFor(site).filter((s) => type === 'null' || s.technology === type);
+    return type === 'null' || status.technologies.includes(type);
+  }
+
+  /** The site's network status entries for the shown page. Used by the marker
+   *  colour. */
+  pageStatusesFor(site: Site | null): TrxStatus[] {
+    return this.statusesFor(site).filter((s) => this.onPage(s));
   }
 
   /** What the hover tooltip shows: the page's entries that are active now. */
-  hoverStatusesFor(site: Site | null): NetworkStatus[] {
+  hoverStatusesFor(site: Site | null): TrxStatus[] {
     return this.pageStatusesFor(site).filter((s) => s.active);
   }
 
-  /** True if one of the site's network status entries on this page is active. */
-  hasActiveStatus(site: Site | null): boolean {
-    return this.hoverStatusesFor(site).length > 0;
+  /** The network status of one transmitter in the details panel (shown below
+   *  its heading), for the shown page. */
+  trxStatusesFor(info: TrxInformation): TrxStatus[] {
+    return this.statusesFor(this.selectedSite).filter((s) => s.trx_uid === info.trx_uid && this.onPage(s));
+  }
+
+  /** True if one of the entries is active (details panel: green block). */
+  hasActive(statuses: TrxStatus[]): boolean {
+    return statuses.some((s) => s.active);
   }
 
   /** Marks sites active in a network green - on "all" for any network, else only
@@ -1566,6 +1564,12 @@ function readHintDismissed(): boolean {
   } catch {
     return false;
   }
+}
+
+/** Statuses in display order: by the first technology (FM first), network, callsign. */
+function sortStatuses(statuses: TrxStatus[]): TrxStatus[] {
+  return [...statuses].sort((a, b) => technologyRank(a.technologies[0]) - technologyRank(b.technologies[0])
+    || a.network.localeCompare(b.network) || a.callsign.localeCompare(b.callsign));
 }
 
 /** Position of a technology in TECHNOLOGY_ORDER (unknown ones last). */
