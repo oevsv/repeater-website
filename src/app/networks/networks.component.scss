@@ -129,3 +129,31 @@ tbody tr:not(.inactive) td:first-child {
   color: #c62828;
   font-weight: 600;
 }
+
+// Shown while the three requests load (a few seconds).
+.networks-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0;
+  color: $muted;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba($accent, 0.2);
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: networks-spin 0.8s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes networks-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

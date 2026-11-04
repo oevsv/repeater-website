@@ -761,6 +761,9 @@
       <trans-unit id="networksUnlinkedHint" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ unlinkedCount }}"/> gelistete Knoten sind noch keinem Sender zugeordnet (siehe „Nicht zugeordnet“ beim jeweiligen Netzwerk).</source>
       </trans-unit>
+      <trans-unit id="networksLoading" datatype="html">
+        <source>Netzwerke werden geladen …</source>
+      </trans-unit>
       <trans-unit id="networksFailed" datatype="html">
         <source>Die Netzwerke konnten nicht geladen werden.</source>
       </trans-unit>

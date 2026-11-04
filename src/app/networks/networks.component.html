@@ -6,6 +6,10 @@
     <p *ngIf="loaded && unlinkedCount" class="networks-intro" i18n="@@networksUnlinkedHint">{{ unlinkedCount }} listed
       nodes are not linked to a transmitter yet (see "Not linked" per network).</p>
     <p *ngIf="failed" i18n="@@networksFailed">The networks could not be loaded.</p>
+    <div *ngIf="!loaded" class="networks-loading" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <span i18n="@@networksLoading">Loading networks…</span>
+    </div>
 
     <!-- Jump links to the networks. -->
     <nav *ngIf="networks.length" class="network-toc">
