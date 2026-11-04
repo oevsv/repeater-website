@@ -122,3 +122,10 @@ tbody tr:not(.inactive) td:first-child {
     opacity: 0.6;
   }
 }
+
+// ircDDB gateway listed as Offline; "last active" follows with the last Online time.
+.offline {
+  margin-right: 6px;
+  color: #c62828;
+  font-weight: 600;
+}

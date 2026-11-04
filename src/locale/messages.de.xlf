@@ -809,6 +809,9 @@
       <trans-unit id="navNetworks" datatype="html">
         <source>Netzwerke</source>
       </trans-unit>
+      <trans-unit id="networkOffline" datatype="html">
+        <source>offline</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

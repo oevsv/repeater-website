@@ -29,6 +29,8 @@ interface TrxNetwork {
   node_frequency: number | null;
   last_listed: string | null;
   listed_now: boolean;
+  /** ircDDB: the gateway's latest listing says Offline. */
+  offline: boolean;
 }
 
 /** A transmitter that could be meant by an unlinked node. */
@@ -49,6 +51,7 @@ interface UnlinkedNode {
   callsign: string;
   node_frequency: number | null;
   last_listed: string;
+  offline: boolean;
   candidates: Candidate[];
 }
 

@@ -46,6 +46,7 @@
               <td class="nowrap mono">{{ l.node }}</td>
               <td class="state nowrap" [class.active]="l.listed_now">
                 <ng-container *ngIf="l.listed_now" i18n="@@netActive">active</ng-container>
+                <span *ngIf="l.offline" class="offline" i18n="@@networkOffline">offline</span>
                 <ng-container *ngIf="!l.listed_now && l.last_listed"><ng-container
                   i18n="@@netLastActive">last active</ng-container> {{ l.last_listed | date: 'short' }}</ng-container>
                 <ng-container *ngIf="!l.last_listed" i18n="@@networkNeverListed">not listed</ng-container>
@@ -73,7 +74,9 @@
               <tr *ngFor="let u of n.unlinked">
                 <td class="nowrap mono">{{ u.node }}</td>
                 <td class="nowrap">{{ u.node_frequency | number: '1.3-4' }}</td>
-                <td class="nowrap">{{ u.last_listed | date: 'short' }}</td>
+                <td class="nowrap">
+                  <span *ngIf="u.offline" class="offline" i18n="@@networkOffline">offline</span>
+                  {{ u.last_listed | date: 'short' }}</td>
                 <td>
                   <div *ngFor="let c of u.candidates" class="candidate" [class.unfit]="!c.fits || c.excluded">
                     <a [routerLink]="['/site', u.callsign]">{{ c.site_name }}</a>
