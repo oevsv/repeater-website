@@ -229,7 +229,11 @@
 
               </p>
               <div *ngFor="let info of trxInfo">
-                <h4 class="uk-margin-top-50 uk-margin-remove-bottom"> {{info.callsign}} {{info.frequency_tx |number: '1.3-4'}} MHz</h4>
+                <!-- The callsign links to its site page (/site/<callsign>), e.g. to share it. -->
+                <h4 class="uk-margin-top-50 uk-margin-remove-bottom">
+                  <a *ngIf="info.callsign" class="trx-callsign" [routerLink]="['/site', info.callsign]"
+                     title="Page of this site" i18n-title="@@trxCallsignLink">{{info.callsign}}</a>
+                  {{info.frequency_tx |number: '1.3-4'}} MHz</h4>
                 <table class="uk-table uk-table-small uk-table-striped uk-margin-remove-top">
                   <thead>
                   <tr>

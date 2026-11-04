@@ -812,6 +812,9 @@
       <trans-unit id="networkOffline" datatype="html">
         <source>offline</source>
       </trans-unit>
+      <trans-unit id="trxCallsignLink" datatype="html">
+        <source>Seite dieses Standorts</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
