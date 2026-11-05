@@ -746,6 +746,9 @@
       <trans-unit id="basemapGreyscale" datatype="html">
         <source>Graustufen</source>
       </trans-unit>
+      <trans-unit id="mapSotaSummits" datatype="html">
+        <source>SOTA-Gipfel</source>
+      </trans-unit>
       <trans-unit id="titleNetworks" datatype="html">
         <source>Repeaternetzwerke ÖVSV</source>
       </trans-unit>

@@ -26,13 +26,17 @@
         <input type="checkbox" [checked]="basemapGrey" (change)="setBasemapGrey($any($event.target).checked)">
         <ng-container i18n="@@basemapGreyscale">Grey tones</ng-container>
       </label>
+      <label class="basemap-option">
+        <input type="checkbox" [checked]="sotaVisible" (change)="setSotaVisible($any($event.target).checked)">
+        <ng-container i18n="@@mapSotaSummits">SOTA summits</ng-container>
+      </label>
     </div>
   </div>
 
   <!-- Tooltip over a repeater: site name, plus its network status if active
        (positioned by an OpenLayers overlay, see frqmap.component.ts). -->
-  <div #statusTip class="status-tip" [hidden]="!hoverSite">
-    <div class="status-tip-site">{{ hoverSite?.site_name }}</div>
+  <div #statusTip class="status-tip" [hidden]="!hoverSite && !hoverSummit">
+    <div class="status-tip-site">{{ hoverSite?.site_name ?? hoverSummit }}</div>
     <ng-container *ngTemplateOutlet="networkStatusList; context: { $implicit: hoverStatusesFor(hoverSite), callsign: true }"></ng-container>
   </div>
 

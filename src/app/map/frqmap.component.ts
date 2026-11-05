@@ -29,7 +29,7 @@ import {Collection, Feature, Overlay} from "ol";
 import {GeoJSON} from "ol/format";
 import VectorLayer from "ol/layer/Vector";
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
-import {Fill, Icon, Stroke, Style, Text} from "ol/style";
+import {Fill, Icon, RegularShape, Stroke, Style, Text} from "ol/style";
 import TileSource from "ol/source/Tile";
 import {Control, defaults as defaultControls} from "ol/control";
 import {LineString, Point} from "ol/geom";
@@ -84,6 +84,26 @@ const BASEMAPS: Basemap[] = [
 /** localStorage: chosen basemap id and greyscale on/off. */
 const BASEMAP_KEY = 'frqmap.basemap';
 const BASEMAP_GREY_KEY = 'frqmap.basemapGrey';
+/** localStorage: SOTA summits shown or not (default: not). */
+const SOTA_KEY = 'frqmap.sota';
+/** SOTA summits in Austria (association OE), a copy in assets. Properties:
+ *  code, name, title ("OE/KT-001 - Großglockner, 3798m, 10pt"), url (sotl.as). */
+const SOTA_GEOJSON = 'assets/sota-OE.json';
+const SOTA_ATTRIBUTION = 'Gipfel: <a href="https://www.sota.org.uk/">SOTA</a>';
+/** SOTA summit: brown triangle below the repeater markers; smaller when
+ *  zoomed out (all of Austria: about 2,200 summits). */
+const sotaStyle = (radius: number) => new Style({
+  image: new RegularShape({
+    points: 3,
+    radius,
+    fill: new Fill({ color: '#8d4e1f' }),
+    stroke: new Stroke({ color: '#fff', width: radius > 4 ? 1.5 : 1 }),
+  }),
+});
+const SOTA_STYLE = sotaStyle(6);
+const SOTA_STYLE_SMALL = sotaStyle(4);
+/** Map resolution (m/pixel) above which the small SOTA triangles are used. */
+const SOTA_SMALL_RESOLUTION = 150;
 const parser = new WMTSCapabilities();
 
 /** Tight bounding box of Austria (EPSG:3857), from its westernmost point near the
@@ -371,6 +391,13 @@ export class FrqmapComponent implements OnInit {
   private networkStatus: Record<string, TrxStatus[]> = {};
   /** Site under the mouse, shown in a tooltip (name, plus its active network status). */
   hoverSite: Site | null = null;
+  /** SOTA summit under the mouse (if no repeater is): its title in the tooltip. */
+  hoverSummit: string | null = null;
+  /** SOTA summits layer: on / off (remembered), loaded on first use. */
+  sotaVisible = FrqmapComponent.load(SOTA_KEY) === '1';
+  private sotaLayer: VectorLayer<VectorSource<any>> | null = null;
+  /** The repeater markers (replaced on every reload of the sites). */
+  private sitesLayer: VectorLayer<VectorSource<any>> | null = null;
   @ViewChild('statusTip', { static: true }) private statusTip!: ElementRef<HTMLElement>;
   @ViewChild('basemapSwitcher', { static: true }) private basemapSwitcher!: ElementRef<HTMLElement>;
   /** Basemap switcher: the choices, the current one, greyscale, panel open. */
@@ -554,6 +581,9 @@ export class FrqmapComponent implements OnInit {
 
     // Basemap switcher (an OL control, so it stacks with zoom / locate).
     this.map.addControl(new Control({ element: this.basemapSwitcher.nativeElement }));
+    if (this.sotaVisible) {
+      this.showSota();
+    }
     // basemap.at layers come from its WMTS capabilities (a copy in assets).
     this.http.get(baseMapCapabilities, { observe: 'body', responseType: 'text' })
       .subscribe({
@@ -593,20 +623,28 @@ export class FrqmapComponent implements OnInit {
       }
 
       let site: Site | null = null;
+      let summit: string | null = null;
       let coordinate: Coordinate | undefined;
       if (!e.dragging && (e.originalEvent as PointerEvent).pointerType === 'mouse') {
-        that.map.forEachFeatureAtPixel(pixel, (f) => {
+        that.map.forEachFeatureAtPixel(pixel, (f, layer) => {
           const s = (f as Feature<any>).get('site') as Site | undefined;
           if (s) {
             site = s;
+            summit = null;
             coordinate = ((f as Feature<any>).getGeometry() as Point).getCoordinates();
-            return true;
+            return true; // a repeater wins
+          }
+          const t = layer && layer === that.sotaLayer ? (f as Feature<any>).get('title') as string : null;
+          if (t && !summit) {
+            summit = t;
+            coordinate = ((f as Feature<any>).getGeometry() as Point).getCoordinates();
           }
           return false;
         });
       }
-      if (site !== that.hoverSite) {
+      if (site !== that.hoverSite || summit !== that.hoverSummit) {
         that.hoverSite = site;
+        that.hoverSummit = summit;
         that.statusTipOverlay?.setPosition(coordinate);
       }
     });
@@ -755,6 +793,38 @@ export class FrqmapComponent implements OnInit {
   setBasemapGrey(grey: boolean): void {
     this.basemapGrey = grey;
     this.store(BASEMAP_GREY_KEY, grey ? '1' : '0');
+  }
+
+  /** Map options: SOTA summits on / off (remembered). */
+  setSotaVisible(visible: boolean): void {
+    this.sotaVisible = visible;
+    this.store(SOTA_KEY, visible ? '1' : '0');
+    if (visible) {
+      this.showSota();
+    } else {
+      this.sotaLayer?.setVisible(false);
+      this.hoverSummit = null;
+    }
+  }
+
+  /** Shows the SOTA summits; the file (about 0.5 MB) is loaded the first time.
+   *  A click on a summit is a location click (nearby repeaters). */
+  private showSota(): void {
+    if (this.sotaLayer) {
+      this.sotaLayer.setVisible(true);
+      return;
+    }
+    this.sotaLayer = new VectorLayer({
+      source: new VectorSource({
+        url: SOTA_GEOJSON,
+        format: new GeoJSON({ dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }),
+        attributions: SOTA_ATTRIBUTION,
+      }),
+      style: (_feature, resolution) => resolution > SOTA_SMALL_RESOLUTION ? SOTA_STYLE_SMALL : SOTA_STYLE,
+      zIndex: 1, // below the repeater markers (2)
+    });
+    this.sotaLayer.getSource()!.on('featuresloaderror', () => console.error('SOTA: failed to load', SOTA_GEOJSON));
+    this.map.addLayer(this.sotaLayer);
   }
 
   /** Puts the layers of the chosen basemap into the basemap group. A basemap.at
@@ -919,9 +989,11 @@ export class FrqmapComponent implements OnInit {
   private drawSitesOnMap(sites: Site[]) {
     //https://openlayers.org/en/latest/examples/icon.html
 
-    // remove layer if it exists
-    if (this.map.getLayers().getLength() > 1)
-       this.map.getLayers().removeAt(1)
+    // remove the markers of the previous load (by reference: other layers such
+    // as the SOTA summits may be on the map, too)
+    if (this.sitesLayer) {
+      this.map.removeLayer(this.sitesLayer);
+    }
 
     console.log("drawsites")
     let featureList :  Collection<Feature<any>> | Feature<any>[] = [];
@@ -953,6 +1025,7 @@ export class FrqmapComponent implements OnInit {
         zIndex: 2 // above the coverage overlay and the nearby-list line
       });
       this.map.set('name','icons')
+      this.sitesLayer = vectorLayer;
       this.map.getLayers().insertAt(1, vectorLayer)
       //this.map.addLayer(vectorLayer)
 
