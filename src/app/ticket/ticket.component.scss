@@ -1,0 +1,208 @@
+/* Ticket pages (/ticket, /ticket/<uuid>). */
+
+$accent: #008CEA;
+$muted: #666;
+
+.tickets {
+  max-width: 900px;
+}
+
+.tickets-intro,
+.muted {
+  color: $muted;
+}
+
+.tickets-error {
+  color: #c62828;
+}
+
+.tickets-login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.tickets-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0;
+  color: $muted;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba($accent, 0.2);
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: tickets-spin 0.8s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes tickets-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ticket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 32px;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+
+  h3 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.ticket-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// "(optional)" after the label (Angular drops the whitespace between them).
+.ticket-field .muted {
+  margin-left: 4px;
+}
+
+// The form is a column; buttons keep their own width.
+.ticket-form > button {
+  align-self: flex-start;
+}
+
+.ticket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket-status-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+
+  select {
+    width: auto;
+  }
+}
+
+.ticket-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+// Needs the user's attention: an answer for the author, a waiting ticket for staff.
+.ticket-table tbody tr.attention td:first-child {
+  box-shadow: inset 4px 0 0 $accent;
+  font-weight: 600;
+}
+
+.ticket-status {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.85em;
+  background: #eee;
+  color: #333;
+
+  &[data-status='open'] {
+    background: #fff3e0;
+    color: #e65100;
+  }
+
+  &[data-status='answered'] {
+    background: #e3f2fd;
+    color: #0d47a1;
+  }
+
+  &[data-status='closed'] {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+}
+
+.ticket-back {
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.ticket-heading {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.ticket-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin: 0 0 16px;
+  color: $muted;
+}
+
+.ticket-message {
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+
+  &.staff {
+    border-color: rgba($accent, 0.4);
+    background: rgba($accent, 0.05);
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin-bottom: 6px;
+  }
+}
+
+.ticket-staff-badge {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: $accent;
+  color: #fff;
+  font-size: 0.8em;
+}
+
+// Keep the user's line breaks; wrap long words / URLs.
+.ticket-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -821,6 +821,135 @@
       <trans-unit id="trxCallsignLink" datatype="html">
         <source>Seite dieses Standorts</source>
       </trans-unit>
+      <trans-unit id="ticketStatusOpen" datatype="html">
+        <source>Offen</source>
+      </trans-unit>
+      <trans-unit id="ticketStatusAnswered" datatype="html">
+        <source>Beantwortet</source>
+      </trans-unit>
+      <trans-unit id="ticketStatusClosed" datatype="html">
+        <source>Erledigt</source>
+      </trans-unit>
+      <trans-unit id="titleTickets" datatype="html">
+        <source>Änderungen melden – ÖVSV Repeater</source>
+      </trans-unit>
+      <trans-unit id="seoTickets" datatype="html">
+        <source>Neue oder geänderte Daten österreichischer Amateurfunk-Repeater an das UKW-Referat des ÖVSV melden.</source>
+      </trans-unit>
+      <trans-unit id="titleTicket" datatype="html">
+        <source>Gemeldete Änderung – ÖVSV Repeater</source>
+      </trans-unit>
+      <trans-unit id="ticketsHeading" datatype="html">
+        <source>Änderungen melden</source>
+      </trans-unit>
+      <trans-unit id="ticketsIntro" datatype="html">
+        <source>Neuer Repeater, geänderte Frequenz, falsche Daten? Hier an das UKW-Referat melden. Ihre Meldungen und die Antworten sehen Sie auf dieser Seite.</source>
+      </trans-unit>
+      <trans-unit id="ticketsLoading" datatype="html">
+        <source>Wird geladen …</source>
+      </trans-unit>
+      <trans-unit id="ticketsLoginNeeded" datatype="html">
+        <source>Bitte melden Sie sich mit Ihrem ÖVSV-Konto an, um Änderungen zu melden.</source>
+      </trans-unit>
+      <trans-unit id="ticketsFailed" datatype="html">
+        <source>Die Meldungen konnten nicht geladen werden.</source>
+      </trans-unit>
+      <trans-unit id="ticketsUnavailable" datatype="html">
+        <source>Diese Seite ist nicht verfügbar.</source>
+      </trans-unit>
+      <trans-unit id="ticketNew" datatype="html">
+        <source>Neue Meldung</source>
+      </trans-unit>
+      <trans-unit id="ticketHeading" datatype="html">
+        <source>Überschrift</source>
+      </trans-unit>
+      <trans-unit id="ticketHeadingPlaceholder" datatype="html">
+        <source>z. B. OE3XNR: neuer CTCSS-Ton</source>
+      </trans-unit>
+      <trans-unit id="ticketSite" datatype="html">
+        <source>Standort</source>
+      </trans-unit>
+      <trans-unit id="ticketOptional" datatype="html">
+        <source>(optional)</source>
+      </trans-unit>
+      <trans-unit id="ticketText" datatype="html">
+        <source>Text</source>
+      </trans-unit>
+      <trans-unit id="ticketSendFailed" datatype="html">
+        <source>Senden fehlgeschlagen, bitte nochmals versuchen.</source>
+      </trans-unit>
+      <trans-unit id="ticketSubmit" datatype="html">
+        <source>Absenden</source>
+      </trans-unit>
+      <trans-unit id="ticketsMine" datatype="html">
+        <source>Ihre Meldungen</source>
+      </trans-unit>
+      <trans-unit id="ticketsAll" datatype="html">
+        <source>Alle Meldungen (Referat)</source>
+      </trans-unit>
+      <trans-unit id="ticketsShowClosed" datatype="html">
+        <source>Erledigte anzeigen</source>
+      </trans-unit>
+      <trans-unit id="ticketsNone" datatype="html">
+        <source>Noch keine Meldungen.</source>
+      </trans-unit>
+      <trans-unit id="ticketStatus" datatype="html">
+        <source>Status</source>
+      </trans-unit>
+      <trans-unit id="ticketUpdated" datatype="html">
+        <source>Letzte Änderung</source>
+      </trans-unit>
+      <trans-unit id="ticketBack" datatype="html">
+        <source>← Alle Meldungen</source>
+      </trans-unit>
+      <trans-unit id="ticketLoginNeeded" datatype="html">
+        <source>Bitte melden Sie sich mit Ihrem ÖVSV-Konto an, um diese Meldung zu sehen.</source>
+      </trans-unit>
+      <trans-unit id="ticketNotFound" datatype="html">
+        <source>Diese Meldung gibt es nicht, oder sie gehört einem anderen Benutzer.</source>
+      </trans-unit>
+      <trans-unit id="ticketFailed" datatype="html">
+        <source>Die Meldung konnte nicht geladen werden.</source>
+      </trans-unit>
+      <trans-unit id="ticketSubmittedBy" datatype="html">
+        <source>Gemeldet von</source>
+      </trans-unit>
+      <trans-unit id="ticketStaff" datatype="html">
+        <source>UKW-Referat</source>
+      </trans-unit>
+      <trans-unit id="ticketReply" datatype="html">
+        <source>Antwort</source>
+      </trans-unit>
+      <trans-unit id="ticketReopenHint" datatype="html">
+        <source>Eine Antwort öffnet die Meldung wieder.</source>
+      </trans-unit>
+      <trans-unit id="ticketSend" datatype="html">
+        <source>Senden</source>
+      </trans-unit>
+      <trans-unit id="ticketClose" datatype="html">
+        <source>Erledigt</source>
+      </trans-unit>
+      <trans-unit id="ticketReopen" datatype="html">
+        <source>Wieder öffnen</source>
+      </trans-unit>
+      <trans-unit id="navTickets" datatype="html">
+        <source>Änderungen melden</source>
+      </trans-unit>
+      <trans-unit id="introtextTickets" datatype="html">
+        <source>oder hier melden (mit Ihrem ÖVSV-Login):</source>
+      </trans-unit>
+      <trans-unit id="siteReportChange" datatype="html">
+        <source>Änderung zu diesem Standort melden</source>
+      </trans-unit>
+      <trans-unit id="authTicketsBadge" datatype="html">
+        <source>Meldungen, die Ihre Aufmerksamkeit brauchen</source>
+      </trans-unit>
+      <trans-unit id="authTicketsAnswered" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 neue Antwort} other {<x id="INTERPOLATION"/> neue Antworten}}</source>
+      </trans-unit>
+      <trans-unit id="authTicketsWaiting" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 wartet auf Antwort} other {<x id="INTERPOLATION"/> warten auf Antwort}}</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

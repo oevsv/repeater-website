@@ -478,3 +478,10 @@ $details-width: 400px; // + 2 * $gap = DETAILS_CARD_WIDTH in the component
 .valueColumn {
   word-break: keep-all;
 }
+
+// Site details: link to /ticket?site=<site name>.
+.site-report {
+  display: inline-block;
+  margin: 0 0 8px;
+  font-size: 0.9em;
+}

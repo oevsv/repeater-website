@@ -12,6 +12,8 @@
         <circle cx="12" cy="7" r="4"/>
       </svg>
       <span class="auth-callsign">{{ me?.callsign }}</span>
+      <span *ngIf="attention" class="auth-badge" title="Submissions needing your attention"
+            i18n-title="@@authTicketsBadge">{{ attention }}</span>
     </button>
     <div class="auth-dropdown" uk-dropdown="mode: click; pos: bottom-right; offset: 6">
       <div class="auth-name">{{ me?.name }}</div>
@@ -37,6 +39,11 @@
           <span>{{ me?.first_seen | date: 'medium' }}</span>
         </li>
       </ul>
+      <a *ngIf="ticketsEnabled" routerLink="/ticket" class="auth-tickets">
+        <span i18n="@@navTickets">Submit updates</span>
+        <span *ngIf="attention && !staff" class="auth-tickets-note" i18n="@@authTicketsAnswered">{attention, plural, =1 {1 new answer} other {{{ attention }} new answers}}</span>
+        <span *ngIf="attention && staff" class="auth-tickets-note" i18n="@@authTicketsWaiting">{attention, plural, =1 {1 waiting for an answer} other {{{ attention }} waiting for an answer}}</span>
+      </a>
       <a class="uk-button uk-button-default uk-width-1-1 auth-logout" href="/logout"
          i18n="@@authLogout">Log out</a>
     </div>

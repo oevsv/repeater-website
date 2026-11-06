@@ -224,6 +224,9 @@
             <div class="alignToStart uk-width-expand">
               <div *ngIf="selectedSite">
                 <h4><ng-container i18n="@@radios">Details</ng-container> </h4>
+                <!-- Report a change of this site (login required on that page). -->
+                <a *ngIf="ticketsVisible$ | async" class="site-report" [routerLink]="['/ticket']" [queryParams]="{ site: selectedSite.site_name }"
+                   i18n="@@siteReportChange">Report a change of this site</a>
               </div>
               <p>
 

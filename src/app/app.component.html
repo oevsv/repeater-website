@@ -56,7 +56,7 @@
       </div>
     </div>
     <div class="drawer-map">
-      <a routerLink="/list" [class.current]="isListPage && !isNetworksPage" i18n="@@navList">List</a>
+      <a routerLink="/list" [class.current]="isListPage && !isNetworksPage && !isTicketPage" i18n="@@navList">List</a>
       <!-- Status per technology (/list/fm, ...); the current one is highlighted. -->
       <div class="drawer-types">
         <span class="drawer-types-label" i18n="@@navStatus">Status:</span>
@@ -67,6 +67,10 @@
     <div class="drawer-map">
       <a routerLink="/networks" [class.current]="isNetworksPage" i18n="@@navNetworks">Networks</a>
     </div>
+    <!-- Hidden while tickets are restricted to staff (TicketService.visible$). -->
+    <div class="drawer-map" *ngIf="ticketsVisible$ | async">
+      <a routerLink="/ticket" [class.current]="isTicketPage" i18n="@@navTickets">Submit updates</a>
+    </div>
   </nav>
 
   <div class="drawer-intro">
@@ -75,7 +79,10 @@
     <a href="https://www.oevsv.at/funkbetrieb/ukw-referat/maps/">
       <ng-container i18n="@@introtext_details3">here</ng-container></a><ng-container i18n="@@introtext_details4">.</ng-container>
     <div>
-    <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to </ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>.
+    <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to </ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>
+      <ng-container *ngIf="ticketsVisible$ | async">
+        <ng-container i18n="@@introtextTickets">or submit them here (with your ÖVSV login):</ng-container>
+        <a routerLink="/ticket" (click)="drawerOpen = false" i18n="@@navTickets">Submit updates</a></ng-container>.
       </div>
   </div>
 

@@ -5,6 +5,8 @@ import { FrqmapComponent } from './map/frqmap.component';
 import { ListComponent } from './list/list.component';
 import { StatusListComponent } from './list/status-list.component';
 import { NetworksComponent } from './networks/networks.component';
+import { TicketListComponent } from './ticket/ticket-list.component';
+import { TicketComponent } from './ticket/ticket.component';
 
 const routes: Routes = [
   // Map, filtered by repeater type: /all/map, /fm/map, /dmr/map, ... The type is
@@ -18,6 +20,9 @@ const routes: Routes = [
   { path: 'list/:technology', component: StatusListComponent },
   // The monitored networks and which transmitter is linked to which node.
   { path: 'networks', component: NetworksComponent },
+  // Submitted updates (login required): list + new, and one ticket by its id.
+  { path: 'ticket', component: TicketListComponent },
+  { path: 'ticket/:id', component: TicketComponent },
   // Start page and old links: the map with all repeater types.
   { path: '', redirectTo: 'all/map', pathMatch: 'full' },
   { path: 'index.html', redirectTo: 'all/map', pathMatch: 'full' },

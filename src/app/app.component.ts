@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { SettingsService } from './map/settings.service';
 import { SeoService } from './seo.service';
 import { STATUS_LIST_TECHNOLOGIES } from './map/repeater-status.service';
+import { TicketService } from './ticket/ticket.service';
 
 @Component({
   standalone: false,
@@ -16,10 +17,12 @@ export class AppComponent {
   drawerOpen = false;
   /** One map page per repeater type (/<slug>/map), from the backend settings. */
   mapTypes: { slug: string; label: string }[] = [];
+  /** Links to /ticket: hidden while tickets are restricted to staff. */
+  readonly ticketsVisible$ = this.tickets.visible$;
 
   // SeoService is created here so it sees the first navigation already.
   constructor(private router: Router, @Inject(LOCALE_ID) public locale: string, settings: SettingsService,
-              _seo: SeoService) {
+              _seo: SeoService, private tickets: TicketService) {
     settings.settings$.subscribe((s) => {
       this.mapTypes = s.filter.types.map((t) =>
         // "all" is null in the settings (the map turns it into 'null').
@@ -46,16 +49,21 @@ export class AppComponent {
     return m ? m[1].toLowerCase() : null;
   }
 
-  /** True on a list page (/list, /list/fm, /networks). Map pages are full
+  /** True on a list page (/list, /list/fm, /networks, /ticket). Map pages are full
    *  screen (floating navigation, no footer); list pages get a solid
    *  navigation bar and a footer. */
   get isListPage(): boolean {
-    return /^\/(?:(?:[^/?#]+\/)?list|networks)(?:[/?#]|$)/.test(this.router.url);
+    return /^\/(?:(?:[^/?#]+\/)?list|networks|ticket)(?:[/?#]|$)/.test(this.router.url);
   }
 
   /** True on /networks. */
   get isNetworksPage(): boolean {
     return /^\/networks(?:[/?#]|$)/.test(this.router.url);
+  }
+
+  /** True on /ticket and /ticket/<uuid>. */
+  get isTicketPage(): boolean {
+    return /^\/ticket(?:[/?#]|$)/.test(this.router.url);
   }
 
   /** Current page path without the locale prefix (e.g. /fm/map), so the

@@ -36,6 +36,7 @@ import {LineString, Point} from "ol/geom";
 import { Pipe, PipeTransform } from '@angular/core';
 import { RepeaterStatusService, TECHNOLOGY_ORDER, TrxStatus } from './repeater-status.service';
 import { SettingsService } from './settings.service';
+import { TicketService } from '../ticket/ticket.service';
 
 
 //const baseUrl : String = "https://repeater.oevsv.at/api"
@@ -417,8 +418,14 @@ export class FrqmapComponent implements OnInit {
     private settingsService : SettingsService,
     private route : ActivatedRoute,
     private router : Router,
-    private seo : SeoService
+    private seo : SeoService,
+    private tickets : TicketService
   ) { }
+
+  /** "Report a change" link: hidden while tickets are restricted to staff. */
+  get ticketsVisible$() {
+    return this.tickets.visible$;
+  }
 
   /** Most precise locator of the clicked / located point: 20 characters, or 10
    *  from a backend without locator_20. */

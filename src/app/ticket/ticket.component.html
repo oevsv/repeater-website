@@ -1,0 +1,65 @@
+<div class="uk-section-default uk-section">
+  <div class="uk-container uk-container-large tickets">
+    <a *ngIf="state !== 'unavailable'" routerLink="/ticket" class="ticket-back" i18n="@@ticketBack">← All submissions</a>
+
+    <!-- Tickets are restricted to staff (repeater-db: ticket_config.staff_only). -->
+    <p *ngIf="state === 'unavailable'" class="tickets-error" i18n="@@ticketsUnavailable">This page is not available.</p>
+
+    <div *ngIf="state === 'loading'" class="tickets-loading" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <span i18n="@@ticketsLoading">Loading…</span>
+    </div>
+
+    <p *ngIf="state === 'login'" class="tickets-login">
+      <ng-container i18n="@@ticketLoginNeeded">Please log in with your ÖVSV account to see this submission.</ng-container>
+      <a class="uk-button uk-button-primary uk-button-small" [href]="loginUrl" i18n="@@authLogin">Login</a>
+    </p>
+    <p *ngIf="state === 'notfound'" class="tickets-error" i18n="@@ticketNotFound">This submission does not exist or
+      belongs to another user.</p>
+    <p *ngIf="state === 'failed'" class="tickets-error" i18n="@@ticketFailed">The submission could not be loaded.</p>
+
+    <ng-container *ngIf="state === 'ready' && ticket as t">
+      <h2 class="ticket-heading">{{ t.heading }}</h2>
+      <p class="ticket-meta">
+        <span class="ticket-status" [attr.data-status]="t.status">{{ statusLabels[t.status] }}</span>
+        <span *ngIf="t.site_name"><ng-container i18n="@@ticketSite">Site</ng-container>: {{ t.site_name }}</span>
+        <span><ng-container i18n="@@ticketSubmittedBy">Submitted by</ng-container> {{ t.author_callsign }},
+          {{ t.created | date: 'medium' }}</span>
+      </p>
+
+      <article *ngFor="let m of t.messages" class="ticket-message" [class.staff]="m.staff">
+        <header>
+          <strong>{{ m.callsign }}</strong>
+          <span *ngIf="m.staff" class="ticket-staff-badge" i18n="@@ticketStaff">VHF management</span>
+          <span class="muted">{{ m.created | date: 'medium' }}</span>
+        </header>
+        <div class="ticket-body">{{ m.body }}</div>
+      </article>
+
+      <form class="ticket-form" (submit)="$event.preventDefault(); send()">
+        <label class="ticket-field">
+          <span i18n="@@ticketReply">Reply</span>
+          <textarea class="uk-textarea" name="reply" rows="4" [(ngModel)]="reply" maxlength="20000"></textarea>
+        </label>
+        <p *ngIf="t.status === 'closed'" class="muted" i18n="@@ticketReopenHint">A reply reopens the submission.</p>
+        <p *ngIf="sendFailed" class="tickets-error" i18n="@@ticketSendFailed">Sending failed, please try again.</p>
+        <div class="ticket-actions">
+          <button type="submit" class="uk-button uk-button-primary" [disabled]="!canSend" i18n="@@ticketSend">Send</button>
+          <ng-container *ngIf="!staff">
+            <button *ngIf="t.status !== 'closed'" type="button" class="uk-button uk-button-default" [disabled]="sending"
+                    (click)="setStatus('closed')" i18n="@@ticketClose">Close</button>
+            <button *ngIf="t.status === 'closed'" type="button" class="uk-button uk-button-default" [disabled]="sending"
+                    (click)="setStatus('open')" i18n="@@ticketReopen">Reopen</button>
+          </ng-container>
+          <label *ngIf="staff" class="ticket-status-select">
+            <span i18n="@@ticketStatus">Status</span>
+            <select class="uk-select uk-form-small" name="status" [ngModel]="t.status" [disabled]="sending"
+                    (ngModelChange)="setStatus($event)">
+              <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
+            </select>
+          </label>
+        </div>
+      </form>
+    </ng-container>
+  </div>
+</div>

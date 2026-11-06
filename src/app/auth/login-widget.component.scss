@@ -23,6 +23,19 @@
   letter-spacing: 0.02em;
 }
 
+// Number of submitted updates needing the user's attention.
+.auth-badge {
+  min-width: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #c62828;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2rem;
+  text-align: center;
+}
+
 .auth-dropdown {
   min-width: 15rem;
 
@@ -58,6 +71,17 @@
 
   .auth-verified {
     color: #137333;
+  }
+
+  .auth-tickets {
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .auth-tickets-note {
+    display: block;
+    color: #c62828;
+    font-size: 0.85em;
   }
 
   .auth-logout {

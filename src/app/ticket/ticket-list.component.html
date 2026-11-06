@@ -1,0 +1,79 @@
+<div class="uk-section-default uk-section">
+  <div class="uk-container uk-container-large tickets">
+    <ng-container *ngIf="state !== 'unavailable'">
+      <h2 i18n="@@ticketsHeading">Submit updates</h2>
+      <p class="tickets-intro" i18n="@@ticketsIntro">New repeater, changed frequency, wrong data? Tell the VHF management
+        here. You see your submissions and the answers on this page.</p>
+    </ng-container>
+
+    <!-- Tickets are restricted to staff (repeater-db: ticket_config.staff_only). -->
+    <p *ngIf="state === 'unavailable'" class="tickets-error" i18n="@@ticketsUnavailable">This page is not available.</p>
+
+    <div *ngIf="state === 'loading'" class="tickets-loading" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <span i18n="@@ticketsLoading">Loading…</span>
+    </div>
+
+    <p *ngIf="state === 'login'" class="tickets-login">
+      <ng-container i18n="@@ticketsLoginNeeded">Please log in with your ÖVSV account to submit updates.</ng-container>
+      <a class="uk-button uk-button-primary uk-button-small" [href]="loginUrl" i18n="@@authLogin">Login</a>
+    </p>
+
+    <p *ngIf="state === 'failed'" class="tickets-error" i18n="@@ticketsFailed">The submissions could not be loaded.</p>
+
+    <ng-container *ngIf="state === 'ready'">
+      <form class="ticket-form" (submit)="$event.preventDefault(); submit()">
+        <h3 i18n="@@ticketNew">New update</h3>
+        <label class="ticket-field">
+          <span i18n="@@ticketHeading">Heading</span>
+          <input class="uk-input" name="heading" [(ngModel)]="heading" maxlength="200" required
+                 placeholder="e.g. OE3XNR: new CTCSS tone" i18n-placeholder="@@ticketHeadingPlaceholder">
+        </label>
+        <label class="ticket-field">
+          <span><ng-container i18n="@@ticketSite">Site</ng-container>
+            <span class="muted" i18n="@@ticketOptional">(optional)</span></span>
+          <input class="uk-input" name="site" [(ngModel)]="siteName" maxlength="100">
+        </label>
+        <label class="ticket-field">
+          <span i18n="@@ticketText">Text</span>
+          <textarea class="uk-textarea" name="body" rows="6" [(ngModel)]="body" maxlength="20000" required></textarea>
+        </label>
+        <p *ngIf="sendFailed" class="tickets-error" i18n="@@ticketSendFailed">Sending failed, please try again.</p>
+        <button type="submit" class="uk-button uk-button-primary" [disabled]="!canSend" i18n="@@ticketSubmit">Submit</button>
+      </form>
+
+      <div class="ticket-list-head">
+        <h3 *ngIf="!staff" i18n="@@ticketsMine">Your submissions</h3>
+        <h3 *ngIf="staff" i18n="@@ticketsAll">All submissions (staff)</h3>
+        <label *ngIf="staff" class="ticket-closed-toggle">
+          <input type="checkbox" class="uk-checkbox" [(ngModel)]="showClosed" name="showClosed">
+          <ng-container i18n="@@ticketsShowClosed">Show closed</ng-container>
+        </label>
+      </div>
+      <p *ngIf="!shown.length" class="muted" i18n="@@ticketsNone">No submissions yet.</p>
+      <div *ngIf="shown.length" class="table-container">
+        <table class="uk-table uk-table-small uk-table-divider uk-table-hover ticket-table">
+          <thead>
+            <tr>
+              <th i18n="@@ticketHeading">Heading</th>
+              <th i18n="@@ticketSite">Site</th>
+              <th *ngIf="staff" i18n="@@listCallsign">Call sign</th>
+              <th i18n="@@ticketStatus">Status</th>
+              <th i18n="@@ticketUpdated">Last change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of shown" [class.attention]="hasAnswer(t) || waiting(t)">
+              <td><a [routerLink]="['/ticket', t.id]">{{ t.heading }}</a>
+                <span class="muted"> ({{ t.messages }})</span></td>
+              <td>{{ t.site_name }}</td>
+              <td *ngIf="staff" class="nowrap">{{ t.author_callsign }}</td>
+              <td class="nowrap"><span class="ticket-status" [attr.data-status]="t.status">{{ statusLabels[t.status] }}</span></td>
+              <td class="nowrap">{{ t.updated | date: 'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>
