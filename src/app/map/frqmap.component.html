@@ -216,6 +216,16 @@
               m
             </ng-container>
             </td>
+          </tr>
+          <!-- Registered at HamnetDB (api.site_type.hamnetdb: callsign of the site there); not a status. -->
+          <tr *ngIf="selectedSite.hamnetdb">
+            <td>
+              <ng-container i18n="@@onHamnetDb">On HamnetDB</ng-container>
+            </td>
+            <td class="uk-text-right valueColumn">
+              <a [href]="hamnetDbUrl(selectedSite.hamnetdb)"
+                 target="_blank" rel="noopener">{{ selectedSite.hamnetdb }}</a>
+            </td>
           </tbody>
         </table>
 

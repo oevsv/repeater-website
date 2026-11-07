@@ -276,6 +276,8 @@ interface Site {
   bev_gid: number,
   geom: object,
   st_askml: string,
+  /** Callsign of the site at HamnetDB (lower case), null if not registered there. */
+  hamnetdb: string | null,
 
   [key: string]: any
 }
@@ -1343,6 +1345,11 @@ export class FrqmapComponent implements OnInit {
         }
       });
     }
+  }
+
+  /** The page of a site at HamnetDB (callsign as in api.site_type.hamnetdb). */
+  hamnetDbUrl(callsign: string): string {
+    return `https://hamnetdb.net/?m=site&q=${encodeURIComponent(callsign)}`;
   }
 
   /** Whether a nearby site is drawn on the map (i.e. not hidden by the filter),
