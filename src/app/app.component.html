@@ -81,7 +81,7 @@
     <div>
     <br><ng-container i18n="@@introtext_details5">Please send your feedback/updates to </ng-container><a href="mailto:ukw@oevsv.at">ukw@oevsv.at</a>
       <ng-container *ngIf="ticketsVisible$ | async">
-        <ng-container i18n="@@introtextTickets">or submit them here (with your ÖVSV login):</ng-container>
+        <ng-container i18n="@@introtextTickets"> or submit them here (with your ÖVSV login): </ng-container>
         <a routerLink="/ticket" (click)="drawerOpen = false" i18n="@@navTickets">Submit updates</a></ng-container>.
       </div>
   </div>

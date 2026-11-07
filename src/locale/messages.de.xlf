@@ -854,6 +854,12 @@
       <trans-unit id="ticketsFailed" datatype="html">
         <source>Die Meldungen konnten nicht geladen werden.</source>
       </trans-unit>
+      <trans-unit id="ticketDelete" datatype="html">
+        <source>Löschen</source>
+      </trans-unit>
+      <trans-unit id="ticketDeleteConfirm" datatype="html">
+        <source>Diese Meldung mit allen Nachrichten löschen? Das kann nicht rückgängig gemacht werden.</source>
+      </trans-unit>
       <trans-unit id="ticketsUnavailable" datatype="html">
         <source>Diese Seite ist nicht verfügbar.</source>
       </trans-unit>
@@ -936,7 +942,7 @@
         <source>Änderungen melden</source>
       </trans-unit>
       <trans-unit id="introtextTickets" datatype="html">
-        <source>oder hier melden (mit Ihrem ÖVSV-Login):</source>
+        <source> oder hier melden (mit Ihrem ÖVSV-Login): </source>
       </trans-unit>
       <trans-unit id="siteReportChange" datatype="html">
         <source>Änderung zu diesem Standort melden</source>

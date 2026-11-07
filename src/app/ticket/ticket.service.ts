@@ -119,4 +119,9 @@ export class TicketService {
   setStatus(id: string, status: TicketStatus): Observable<void> {
     return this.rpc('ticket_set_status', { id, status });
   }
+
+  /** Staff only: deletes the ticket with all its messages. */
+  delete(id: string): Observable<void> {
+    return this.rpc('ticket_delete', { id });
+  }
 }

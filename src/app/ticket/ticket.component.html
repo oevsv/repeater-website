@@ -58,6 +58,8 @@
               <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
             </select>
           </label>
+          <button *ngIf="staff" type="button" class="uk-button uk-button-danger" [disabled]="sending"
+                  (click)="deleteTicket()" i18n="@@ticketDelete">Delete</button>
         </div>
       </form>
     </ng-container>

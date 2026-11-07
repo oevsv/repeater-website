@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { SeoService } from '../seo.service';
@@ -31,7 +31,8 @@ export class TicketComponent implements OnInit, OnDestroy {
   private id = '';
   private sub?: Subscription;
 
-  constructor(private ticketService: TicketService, private route: ActivatedRoute, private seo: SeoService) {}
+  constructor(private ticketService: TicketService, private route: ActivatedRoute, private router: Router,
+              private seo: SeoService) {}
 
   ngOnInit(): void {
     this.sub = this.route.paramMap.subscribe((params) => {
@@ -101,6 +102,26 @@ export class TicketComponent implements OnInit, OnDestroy {
 
   setStatus(status: TicketStatus): void {
     this.run(this.ticketService.setStatus(this.id, status));
+  }
+
+  /** Staff: deletes the ticket with all messages (after asking), back to the list. */
+  deleteTicket(): void {
+    if (!confirm($localize`:@@ticketDeleteConfirm:Delete this submission with all its messages? This cannot be undone.`)) {
+      return;
+    }
+    this.sending = true;
+    this.sendFailed = false;
+    this.ticketService.delete(this.id).subscribe({
+      next: () => this.router.navigate(['/ticket']),
+      error: (err) => {
+        this.sending = false;
+        if (isLoginError(err)) {
+          this.fail(err);
+        } else {
+          this.sendFailed = true;
+        }
+      },
+    });
   }
 
   /** Sends a change, then reloads the ticket (status and messages). */
