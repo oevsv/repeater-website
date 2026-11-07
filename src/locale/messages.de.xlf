@@ -854,8 +854,8 @@
       <trans-unit id="ticketsFailed" datatype="html">
         <source>Die Meldungen konnten nicht geladen werden.</source>
       </trans-unit>
-      <trans-unit id="onHamnetDb" datatype="html">
-        <source>Auf HamnetDB</source>
+      <trans-unit id="hamnetDbListed" datatype="html">
+        <source>vorhanden</source>
       </trans-unit>
       <trans-unit id="ticketDelete" datatype="html">
         <source>Löschen</source>
